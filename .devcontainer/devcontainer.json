@@ -16,5 +16,5 @@
             "label": "jwks"
         }
     },
-    "postAttachCommand": "./.devcontainer/postAttachCommand.sh"
+    "postAttachCommand": ". ./.devcontainer/postAttachCommand.sh"
 }
