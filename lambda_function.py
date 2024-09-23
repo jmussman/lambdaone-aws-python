@@ -30,27 +30,30 @@ def handler(event, context):
         bearer_token = event['headers']['authorize']
         token = re.sub(r'^bearer\s*(.*)$', r'\1', bearer_token)
         
-        # Get the JWKSPATH, token from the header, and use PyJWT to load the key.
+        # Look for the JWKS URI or the local path.
 
         jwks_path = os.environ['JWKSPATH']
-
-        if len(jwks_path):
-
-            ( key, algorithm ) = jwt_key.load(jwks_path, token)
-
-        # An alternative is to read a fixed public key from an external file:
-
         signature_key_path = os.environ['SIGNATUREKEYPATH']
 
-        if len(signature_key_path):
+        if len(jwks_path) > 0 and len(signature_key_path) > 0:
 
-            ( key, algorithm ) = fixed_key.load(signature_key_path, token)
+            result = { 'statusCode': 400, 'body': json.dumps('Bad request') }
 
-        result = authz.verify(token, key, algorithm, audience, issuer, require)
+        else:
 
-        if result == None:
+            if len(jwks_path) > 0 and len(signature_key_path) <= 0:
 
-            result = { 'statusCode': 403, 'body': json.dumps('Access denied') }
+                ( key, algorithm ) = jwt_key.load(jwks_path, token)
+
+            if len(signature_key_path) > 0 and len(jwks_path) <= 0:
+
+                ( key, algorithm ) = fixed_key.load(signature_key_path, token)
+
+            result = authz.verify(token, key, algorithm, audience, issuer, require)
+
+            if result == None:
+
+                result = { 'statusCode': 403, 'body': json.dumps('Access denied') }
     
     if result == None:
 

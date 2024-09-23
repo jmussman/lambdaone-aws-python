@@ -13,28 +13,30 @@ LambdaOne is a simple AWS lambda project with the goal of:
 
 * Providing a template building an AWS Lambda function locally
 * Using a third-party identity provider (IdP) for authorization
-* Demonstrating local unit and integration testing
+* Demonstrating local unit and integration testing, especially the dificulties of mocking class definitions
 * Build a deployable Lambda using either a container or zip file
 
 Start with the [AWS Lambda](https://docs.aws.amazon.com/lambda/) documentation and the
-[Developer Guide](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html).
-Information on building functions is buried farther along the page under "Configuring Functions" which
-is not such an obvious place.
+[Developer Guide](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), but
+almost nobody uses the embedded editor because developers rarely have access to deploy labda functions.
+Information about building functions is farther along along the page, not necessarily obvious under "Configuring Functions".
 There are two paths, one for [containers](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html)
 and the other for deploying [zp files](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html).
 
-This project provides a structure for setting up the lambda code, and performing both unit and integration tests.
-The Lambda is very simple, it simply returns a line of text.
+This project provides a well defined structure for setting up the lambda code, performing both unit and integration tests,
+and integrating third-party identity.
+The lambda is very simple, simplying returning a line of of text.
 
-AWS assumes in the Boto3 library that you will use AWS as the IdP for for authorizing the application to the Lambda,
-if necessary.
-This project addresses using a more robust IdP for customer identity, such as Otka CIC
-(formally Auth0),
-or for internal applications perhaps a workforce identity product, such as Okta WIC.
+The Boto3 library onbly supports AWS as the IdP for the application to the lambda authorization.
+This project addresses using a more robust, third-party IdP for customer identity.
+THis could be someline like Otka CIC (formally Auth0) for customer identity,
+or for internal applications perhaps a workforce identity product such as Okta WIC.
 
-A full set of example unit and integration tests are provided, that cover
-both the lambda function iteself the authorization code.
-These are necessary for maintaining a robust lambda project and performing regression testing
+A full set of example unit and integration tests are provided that cover
+both the lambda function and the authorization code.
+Deployment of lambda functions is normally the responsibility of the cloud administrators, not the developers, so
+it is necessary as developers to have a full set of tests that make sure the project is robust and will work when deployed.
+These tests are also necessary for performing regression testing
 when new features are added or issues are fixed.
 
 ## Project
@@ -71,6 +73,9 @@ test/
 The expected integrated development environment (IDE) for this project is visual studio code.
 Python 3.8 or later is required; this project was built and tested with version 3.12.2.
 
+If you prefer to run the project in GitHub Codespaces [jump ahead](#run-the-tests-in-github-codespaces)
+
+
 #### Instructions
 
 1. Clone this project locally with *get clone git@github.com:jmussman/lambdaone-aws-python.git*.
@@ -91,17 +96,43 @@ Install both of these with pip at the command line:
     ```
 1. Now the environment is ready to begin development or run the existing tests.
 
+#### Run the tests in GitHub Codespaces
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=858797673) 
+
+Click the button to open the project in GitHub Codespaces.
+Wait for codespaces to open and initialize, watch to see that the *pip* commands to install the packages finish executing.
+In the VSCode Run and Debug panel execute *All Tests* or *Coverage All Tests*".
+A new terminal window will open to display the results (and a second window for the report if code coverage is run).
+
 ### Tests
 
 Run the unit and integration tests from the *Run and Debug* panel using the *All Tests* or *Coverage All Tests* launch configuration.
 The tests will run in the terminal window labeled *Python Debug Console*.
 If coverage is selected, the code coverage report will open in another terminal window.
 
-The integration test for *lambda_function* requires a JWKS server to provide the key in JSON format.
+The integration test for *lambda_function, test_lambda_function.py*, requires a JWKS server to provide the key in JSON format.
 This is handled by creating a Python HTTP server with a SimpleHTTPRequestHandler for the requests that serves files from
 the test/resources folder.
 The hardwired JSON key is in the resources folder.
 The server starts when the test class is loaded, and is shut down when the test class ends.
+
+*test_jwt_key* includes an example of mocking out a class definition.
+The *jwt_key* module uses the *jwt.jwks_client.PyJWKClient* class to retrieve the JWKS
+public keys from the IdP.
+The problem is there are six ways the class could be referenced by the code under test (CUT).
+The class is referenced in two places and can be used with a full qualified name from either
+location: jwt.jwks_client.PyJWKClient or jwt.PyJWKClient.
+To compund the problem the CUT could load the class as a property using the form
+"from jwt.jwks_client import PyJWKClient" or "from jwt import PYJWKClient".
+In that case the reference becomes a property of jwt_key.
+
+So to do an opqaue-view test both of the references in the *jwt* module must be mocked along
+with the property that could be imported into jwt_key.
+The *setUpClass* method in *test_jwt* mocks the two references, and then hoists them above the
+import in the *jwt_key* module by reloading the module.
+The reference to the original class definition is preserved, and in the *teearDownClass* method
+it replaces the reference and then reloads both the *jwt* and *jwt_key* modules.
 
 ### Authorization
 

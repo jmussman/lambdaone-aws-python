@@ -79,6 +79,16 @@ class TestLambdaFunction(TestCase):
 
         mock_lambdaone_fixed_key_load.assert_called_once_with('public.pem', TestLambdaFunction.mock_token)
 
+    def test_rejects_both_jwks_and_signature(self):
+
+        os.environ['JWKSPATH'] = 'https://pyrates/jwks'
+        os.environ['REQUIRE'] = 'treasure:read'
+        os.environ['SIGNATUREKEYPATH'] = 'public.pem'
+
+        result = lambda_function.handler(self.mock_event, self.mock_context)
+
+        self.assertEqual(400, result['statusCode'])
+
     def test_passes_token_body_for_authz(self):
 
         os.environ['REQUIRE'] = 'treasure:read'

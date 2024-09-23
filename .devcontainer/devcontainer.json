@@ -1,0 +1,12 @@
+{
+    "name": "LambdaOne AWS Python",
+    "forwardPorts": [
+        8000
+    ],
+    "portsAttributes": {
+        "3800": {
+            "label": "jwks"
+        }
+    },
+    "postAttachCommand": "./.devcontainer/postAttachCommand.sh"
+}
