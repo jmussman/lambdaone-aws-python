@@ -5,9 +5,8 @@
 from dotenv import load_dotenv
 import os
 import time
-import unittest
 from unittest import TestCase
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, patch
 
 import lambda_function
 

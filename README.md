@@ -75,17 +75,33 @@ Python 3.8 or later is required; this project was built and tested with version 
 
 1. Clone this project locally with *get clone git@github.com:jmussman/lambdaone-aws-python.git*.
 1. Open the project in VS Code.
-1. In the project create a virtual python environment from the terminal with *python -m venv .venv*.
-The folder name is important.
+1. In the project create a virtual python environment from the terminal.
+The folder name .env is important:
+    ```
+    $ python -m venv .venv
+    ```
 1. From the VS Code command palette run *Python: Select Interpreter* and pick *.venv/bin/python*.
 1. Recommended: open VS Code settings, search for *Python Terminal Activate Environment*, and make sure it is checked.
 This will run the activation script in each terminal window opened.
+1. There are two sets of module requirements for the project, one for production and a second one with development dependencies.
+Install both of these with pip at the command line:
+    ```
+    $ pip -r requirements.txt
+    $ pip -r devrequirements.txt
+    ```
+1. Now the environment is ready to begin development or run the existing tests.
 
 ### Tests
 
 Run the unit and integration tests from the *Run and Debug* panel using the *All Tests* or *Coverage All Tests* launch configuration.
 The tests will run in the terminal window labeled *Python Debug Console*.
 If coverage is selected, the code coverage report will open in another terminal window.
+
+The integration test for *lambda_function* requires a JWKS server to provide the key in JSON format.
+This is handled by creating a Python HTTP server with a SimpleHTTPRequestHandler for the requests that serves files from
+the test/resources folder.
+The hardwired JSON key is in the resources folder.
+The server starts when the test class is loaded, and is shut down when the test class ends.
 
 ### Authorization
 

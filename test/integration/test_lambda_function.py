@@ -14,25 +14,23 @@ import re
 import sys
 from threading import Thread
 import time
-import unittest
 from unittest import TestCase
-from unittest.mock import ANY, MagicMock, patch
 
 import lambda_function
-
-# The class that will be instantiated to handle each HTTP request; this
-# inits the SimpleHTTPRequestHandler to look in 'test/resources'.
-
-class JWKSHandler(SimpleHTTPRequestHandler):
-
-    def __init__(self, *args, **kwargs):
-        
-        super().__init__(*args, directory='test/resources', **kwargs)
 
 class TestLambdaFunction(TestCase):
 
     @classmethod
     def setUpClass(cls):
+
+        # The class that will be instantiated to handle each HTTP request; this
+        # inits the SimpleHTTPRequestHandler to look in 'test/resources'.
+
+        class JWKSHandler(SimpleHTTPRequestHandler):
+
+            def __init__(self, *args, **kwargs):
+                
+                super().__init__(*args, directory='test/resources', **kwargs)
         
         # This will be used to launch a web server that provides the JWKS data, in order to
         # satisfy the jwks_client.get_signing_key_from_jwt() method in jwt_key.py.
@@ -46,11 +44,13 @@ class TestLambdaFunction(TestCase):
         cls.thread = Thread(target = run_jwks_server)
         cls.thread.start()
 
-        cls.mock_audience = os.environ['AUDIENCE'] = 'https://treasure'
-        cls.mock_issuer = os.environ['ISSUER'] = 'https://pyrates'
-        cls.mock_jwks_path = os.environ['JWKSPATH'] = ''
-        cls.mock_require = os.environ['REQUIRE'] = ''
-        cls.mock_signature_key_path = os.environ['SIGNATUREKEYPATH'] = ''
+        load_dotenv()
+
+        cls.mock_audience = 'https://treasure'
+        cls.mock_issuer = 'https://pyrates'
+        cls.mock_jwks_path = ''
+        cls.mock_require = ''
+        cls.mock_signature_key_path = ''
 
         cls.mock_subject = '1234567890'
         cls.mock_scopeList = 'treasure:read'
@@ -73,8 +73,6 @@ class TestLambdaFunction(TestCase):
 
         cls.mock_token_payload = { 'aud': cls.mock_audience, 'iss': cls.mock_issuer, 'sub': cls.mock_subject, 'issuedat': now, 'expiresat': expires, 'scopes': cls.mock_scopes}        
         cls.mock_token = jwt.encode(cls.mock_token_payload, cls.mock_private_key, algorithm = 'RS256', headers = { 'kid': '5b889a22-6e44-45f7-8f5e-537db1d9b16e' })
-
-        load_dotenv()
 
     def setUp(self):
                 

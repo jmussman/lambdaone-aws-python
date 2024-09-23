@@ -2,12 +2,10 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
-from cryptography.hazmat.primitives import serialization
 import jwt
 import time
-import unittest
 from unittest import TestCase
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 from lambdaone import authz
 

@@ -2,32 +2,12 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
-
 import importlib
-import sys
-import unittest
+import jwt
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-# Get the patches set up and started for the two instances of the PyJWKClient class: the original is in the
-# jwt.jwks_client module, and the second is imported (and exported) from the jwt module. The original is
-# most likely not used, unless the code under test goes there. But the patch is set up anyways, just in case.
-# Much more likely is pulling it from the jwt module. In that case if jwt.PyJWKClient is used in the code,
-# any normal patch on the test class or the test methods will work. But... if the CUT invokes
-# "from jwt import PyJWKClient", that must happen AFTER the patches have been established or the module
-# will see the real class. This hoists the mocks above the import of the CUT:
-
 from lambdaone import jwt_key
-
-mock_client = MagicMock()
-
-mock_jwt_jwks_client_PyJWKClient_context = patch('jwt.jwks_client.PyJWKClient', return_value = mock_client)
-mock_jwt_jwks_client_PyJWKClient_context.start()
-
-mock_jwt_PyJWKClient_context = patch('jwt.PyJWKClient', return_value = mock_client)
-mock_jwt_PyJWKClient_context.start()
-
-importlib.reload(jwt_key)
 
 class TestJwtKey(TestCase):
 
@@ -41,12 +21,46 @@ class TestJwtKey(TestCase):
         cls.mock_path = 'https://pyrates/jwks'
         cls.mock_token = 'token'
 
+        # The PyJWKClient class original is in the jwt.jwks_client module, but it is also referenced as a property in the
+        # jwt module. Mocking the class is not a serious problem if the code under test (CUT) references it as either
+        # jwt.PyJWKClient or jwt.jwks_client.PyJWKClient. In that case, simply mock both references and have the
+        # class return an object instance we can control (in this test the method get_signing_key_from_jwt must be mocked).
+        #
+        # The problem arises if the CUT uses "from jwt import PyJWKClient" or "from jwt.jwks_client import PyJWKClient".
+        # When that happens the class reference is copied into jwk_key module as a property. That opens up a third
+        # possible mock: look for the property in the jwt_key module and mock it!
+        #  
+        # The third mocking possibility, and worrying about the import/call form the CUT is using, can be handled by
+        # mocking the first two possibilities and then reloading the jwt_key module so it picks up the new reference.
+        # In this case, the original reference is saved to replace and reload both jwt_key and jwk after completion.
+
+        cls.mod_jwt_jwks_client_PyJWKClient = jwt.jwks_client.PyJWKClient
+
+        cls.mock_client = MagicMock()
+
+        cls.mock_jwt_jwks_client_PyJWKClient_context = patch('jwt.jwks_client.PyJWKClient', return_value = cls.mock_client)
+        cls.mock_jwt_jwks_client_PyJWKClient_context.start()
+
+        cls.mock_jwt_PyJWKClient_context = patch('jwt.PyJWKClient', return_value = cls.mock_client)
+        cls.mock_jwt_PyJWKClient_context.start()
+
+        # If you are familar with jest or vitest in JavaScript, this call forces the mocks to be "hosited" in front of
+        # the jwt_key module import. It is a reload but it is the same thing:
+
+        importlib.reload(jwt_key)
+
     @classmethod
     def tearDownClass(cls) -> None:
 
-        mock_jwt_jwks_client_PyJWKClient_context.stop()
-        mock_jwt_PyJWKClient_context.stop()
+        cls.mock_jwt_jwks_client_PyJWKClient_context.stop()
+        cls.mock_jwt_PyJWKClient_context.stop()
 
+        # As describe above, the original class must be inserted back into the jwt module and
+        # then both modules reloaded for other test fixtures:
+
+        jwt.PyJWKClient = jwt.jwks_client.PyJWKClient = cls.mod_jwt_jwks_client_PyJWKClient
+
+        importlib.reload(jwt)
         importlib.reload(jwt_key)
 
         return super().tearDownClass()
@@ -59,20 +73,20 @@ class TestJwtKey(TestCase):
         # and the return_value and side_effect reinitalized after each test,
         # because changes could be made in any test.
 
-        mock_client.reset_mock()
-        mock_client.get_signing_key_from_jwt.return_value = TestJwtKey.mock_key
-        mock_client.get_signing_key_from_jwt.side_effect = None
+        TestJwtKey.mock_client.reset_mock()
+        TestJwtKey.mock_client.get_signing_key_from_jwt.return_value = TestJwtKey.mock_key
+        TestJwtKey.mock_client.get_signing_key_from_jwt.side_effect = None
 
         # The two Class mocks for PyJWKClient must be reset and the return_value
         # and side_effect reinitialized after each test.
 
-        mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.reset_mock()
-        mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.return_value = mock_client
-        mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.side_effect = None
+        TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.reset_mock()
+        TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.return_value = TestJwtKey.mock_client
+        TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.side_effect = None
 
-        mock_jwt_PyJWKClient_context.target.PyJWKClient.reset_mock()
-        mock_jwt_PyJWKClient_context.target.PyJWKClient.return_value = mock_client
-        mock_jwt_PyJWKClient_context.target.PyJWKClient.side_effect = None
+        TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.reset_mock()
+        TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.return_value = TestJwtKey.mock_client
+        TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.side_effect = None
 
         # Mock jwt.get_unverified_header; this is a fixed function so it will be OK here.
 
@@ -96,13 +110,13 @@ class TestJwtKey(TestCase):
         # in jwt (more likely) or the one in jwt.jwks_client where it originates. Both must be
         # checked to make sure at least one was called with the correct argument.
 
-        if mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.call_count > 0:
+        if TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.call_count > 0:
 
-            mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.assert_called_once_with(TestJwtKey.mock_path)
+            TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.assert_called_once_with(TestJwtKey.mock_path)
 
-        elif mock_jwt_PyJWKClient_context.target.PyJWKClient.call_count > 0:
+        elif TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.call_count > 0:
             
-            mock_jwt_PyJWKClient_context.target.PyJWKClient.assert_called_once_with(TestJwtKey.mock_path)
+            TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.assert_called_once_with(TestJwtKey.mock_path)
 
         else:
 
@@ -112,7 +126,7 @@ class TestJwtKey(TestCase):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
-        mock_client.get_signing_key_from_jwt.assert_called_once_with(TestJwtKey.mock_token)
+        TestJwtKey.mock_client.get_signing_key_from_jwt.assert_called_once_with(TestJwtKey.mock_token)
 
     def test_get_algorithm_with_token(self):
         
@@ -122,7 +136,7 @@ class TestJwtKey(TestCase):
 
     def test_None_on_read_error(self):
 
-        mock_client.get_signing_key_from_jwt.side_effect = Exception
+        TestJwtKey.mock_client.get_signing_key_from_jwt.side_effect = Exception
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
@@ -151,8 +165,8 @@ class TestJwtKey(TestCase):
 
     def test_None_on_open_error(self):
 
-        mock_jwt_PyJWKClient_context.target.PyJWKClient.side_effect = Exception
-        mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.side_effect = Exception
+        TestJwtKey.mock_jwt_PyJWKClient_context.target.PyJWKClient.side_effect = Exception
+        TestJwtKey.mock_jwt_jwks_client_PyJWKClient_context.target.PyJWKClient.side_effect = Exception
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 

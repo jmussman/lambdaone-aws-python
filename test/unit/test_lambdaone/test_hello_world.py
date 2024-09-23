@@ -2,7 +2,6 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
-import unittest
 from unittest import TestCase
 
 from lambdaone import hello_world
