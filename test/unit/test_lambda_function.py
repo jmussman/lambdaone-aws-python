@@ -24,6 +24,7 @@ class TestLambdaFunction(TestCase):
         cls.mock_event = { 'headers': { 'authorize': f'bearer {cls.mock_token}' }}
         cls.mock_context = {}
         cls.mock_key = '-----BEGIN PUBLIC KEY-----MIIBIjAN...'
+        cls.mock_algorithm = 'RS256'
 
         load_dotenv()
 
@@ -43,7 +44,7 @@ class TestLambdaFunction(TestCase):
         self.mock_sys_version.start()
         self.addCleanup(self.mock_sys_version.stop)
 
-        self.mock_lambdaone_jwt_key_load_context = patch('lambdaone.jwt_key.load', return_value = TestLambdaFunction.mock_key)
+        self.mock_lambdaone_jwt_key_load_context = patch('lambdaone.jwt_key.load', return_value = ( TestLambdaFunction.mock_key, TestLambdaFunction.mock_algorithm ))
         self.mock_lambdaone_jwt_key_load_context.start()
         self.addCleanup(self.mock_lambdaone_jwt_key_load_context.stop)
 
@@ -73,11 +74,11 @@ class TestLambdaFunction(TestCase):
         os.environ['JWKSPATH'] = ''
         os.environ['REQUIRE'] = 'treasure:read'
         os.environ['SIGNATUREKEYPATH'] = 'public.pem'
-        mock_lambdaone_fixed_key_load.return_value = TestLambdaFunction.mock_key
+        mock_lambdaone_fixed_key_load.return_value = ( TestLambdaFunction.mock_key, TestLambdaFunction.mock_algorithm )
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        mock_lambdaone_fixed_key_load.assert_called_once_with('public.pem')
+        mock_lambdaone_fixed_key_load.assert_called_once_with('public.pem', TestLambdaFunction.mock_token)
 
     def test_passes_token_body_for_authz(self):
 
@@ -85,7 +86,7 @@ class TestLambdaFunction(TestCase):
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(TestLambdaFunction.mock_token, ANY, ANY, ANY, ANY)
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(TestLambdaFunction.mock_token, ANY, ANY, ANY, ANY, ANY)
 
     def test_passes_key_for_authz(self):
 
@@ -93,7 +94,15 @@ class TestLambdaFunction(TestCase):
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, TestLambdaFunction.mock_key, ANY, ANY, ANY)
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, TestLambdaFunction.mock_key, ANY, ANY, ANY, ANY)
+
+    def test_passes_agorithm_for_authz(self):
+
+        os.environ['REQUIRE'] = 'treasure:read'
+
+        lambda_function.handler(self.mock_event, self.mock_context)
+
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, TestLambdaFunction.mock_algorithm, ANY, ANY, ANY)
 
     def test_passes_audience_for_authz(self):
 
@@ -101,7 +110,7 @@ class TestLambdaFunction(TestCase):
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, self.mock_audience, ANY, ANY)
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, ANY, self.mock_audience, ANY, ANY)
 
     def test_passes_issuer_for_authz(self):
 
@@ -109,7 +118,7 @@ class TestLambdaFunction(TestCase):
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, ANY, self.mock_issuer, ANY)
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, ANY, ANY, self.mock_issuer, ANY)
 
     def test_passes_require_for_authz(self):
 
@@ -117,17 +126,17 @@ class TestLambdaFunction(TestCase):
 
         lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, ANY, ANY, [ 'treasure:write' ])
+        self.mock_lambdaone_authz_verify_context.target.verify.assert_called_once_with(ANY, ANY, ANY, ANY, ANY, [ 'treasure:write' ])
 
     def test_calls_hello_world(self):
 
-        result = lambda_function.handler(None, None)
+        result = lambda_function.handler(self.mock_event, self.mock_context)
 
         self.assertIn('Hello, Mock!', result)
 
     def test_references_sys_version(self):
 
-        result = lambda_function.handler(None, None)
+        result = lambda_function.handler(self.mock_event, self.mock_context)
 
         self.assertIn('version_mock', result)
 
@@ -139,7 +148,3 @@ class TestLambdaFunction(TestCase):
         result = lambda_function.handler(self.mock_event, self.mock_context)
 
         self.assertEqual(403, result['statusCode'])
-
-if __name__ == '__main__':
-    
-    unittest.main()

@@ -2,13 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Unit Tests",
+            "name": "All Tests",
             "type": "debugpy",
             "request": "launch",
             "module": "unittest",
             "console": "integratedTerminal",
-            "args": "discover -s test",
+            "args": "discover -s test -v",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
             "envFile": ""
+        },
+        {
+            "name": "Coverage All Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "coverage",
+            "console": "integratedTerminal",
+            "args": "run --source=lambda_function,lambdaone -m unittest discover -s test -v",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "",
+            "postDebugTask": "coverage report"
         },
         {
             "name": "Run Current File",
@@ -17,6 +33,18 @@
             "program": "${file}",
             "args": "-v",
             "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": ""
+        },
+        {
+            "name": "Run Current Test File",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "console": "integratedTerminal",
+            "args": "${file} -v",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },

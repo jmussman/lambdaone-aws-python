@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "coverage report",
+            "type": "shell",
+            "command": "coverage",
+            "args": [ "report", "-m" ],
+            "presentation": {
+                "panel": "shared",
+                "showReuseMessage": false
+            }
+        }
+    ]
+}

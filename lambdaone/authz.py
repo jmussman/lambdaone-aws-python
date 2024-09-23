@@ -6,7 +6,7 @@ import jwt
 from jwt import PyJWKClient
 import os
 
-def verify(access_token, signing_key, audience, issuer, scopes):
+def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
 
     # A valid decoded token is returned, or None if something went wrong. None should
     # produce a 403 error from the endpoint.
@@ -15,9 +15,10 @@ def verify(access_token, signing_key, audience, issuer, scopes):
 
     try:
 
-        # Decode the token using the indicated key.
+        # Decode the token using the indicated key. The only algorithms supported are listed
+        # at https://pyjwt.readthedocs.io/en/stable/algorithms.html.
 
-        decoded_token = jwt.decode(access_token, signing_key, algorithms=['RS256'], audience=audience, issuer=issuer, options={ 'verify_exp': True, 'verify_iss': True, 'verify_aud': True })
+        decoded_token = jwt.decode(access_token, signing_key, algorithms = [ algorithm ], audience=audience, issuer=issuer, options = { 'verify_exp': True, 'verify_iss': True, 'verify_aud': True })
         resolved = 0
 
         for scope in scopes:
@@ -28,6 +29,7 @@ def verify(access_token, signing_key, audience, issuer, scopes):
             result = decoded_token
 
     except Exception as e:
+        
         result = None
 
     return result

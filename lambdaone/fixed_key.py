@@ -4,9 +4,12 @@
 # Use PyJWT to load the signing key from a public key store.
 #
 
-def load(path):
+import jwt
+
+def load(path, token):
 
     signing_key = None
+    algorithm = None
 
     try:
 
@@ -14,8 +17,11 @@ def load(path):
 
             signing_key = keydata.read()
 
+        algorithm = jwt.get_unverified_header(token)['alg']
+
     except Exception as e:
 
-        pass
-
-    return signing_key
+        signing_key = None
+        algorithm = None
+    
+    return ( signing_key, algorithm )

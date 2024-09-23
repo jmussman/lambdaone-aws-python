@@ -14,6 +14,3 @@ class TestHelloWorld(TestCase):
         result = hello_world.hello()
 
         self.assertIn('Hello, World!', result)
-
-if __name__ == '__main__':
-    unittest.main()

@@ -36,7 +36,7 @@ def handler(event, context):
 
         if len(jwks_path):
 
-            key = jwt_key.load(jwks_path, token)
+            ( key, algorithm ) = jwt_key.load(jwks_path, token)
 
         # An alternative is to read a fixed public key from an external file:
 
@@ -44,9 +44,9 @@ def handler(event, context):
 
         if len(signature_key_path):
 
-            key = fixed_key.load(signature_key_path)
+            ( key, algorithm ) = fixed_key.load(signature_key_path, token)
 
-        result = authz.verify(token, key, audience, issuer, require)
+        result = authz.verify(token, key, algorithm, audience, issuer, require)
 
         if result == None:
 
@@ -54,6 +54,6 @@ def handler(event, context):
     
     if result == None:
 
-        result = f'{ hello_world.hello() }! sys.version: { sys.version }'
+        result = f'{ hello_world.hello() } sys.version: { sys.version }'
 
     return result

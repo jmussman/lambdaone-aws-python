@@ -2,6 +2,9 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
+
+import importlib
+import sys
 import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -14,6 +17,8 @@ from unittest.mock import MagicMock, patch
 # "from jwt import PyJWKClient", that must happen AFTER the patches have been established or the module
 # will see the real class. This hoists the mocks above the import of the CUT:
 
+from lambdaone import jwt_key
+
 mock_client = MagicMock()
 
 mock_jwt_jwks_client_PyJWKClient_context = patch('jwt.jwks_client.PyJWKClient', return_value = mock_client)
@@ -22,7 +27,7 @@ mock_jwt_jwks_client_PyJWKClient_context.start()
 mock_jwt_PyJWKClient_context = patch('jwt.PyJWKClient', return_value = mock_client)
 mock_jwt_PyJWKClient_context.start()
 
-from lambdaone import jwt_key
+importlib.reload(jwt_key)
 
 class TestJwtKey(TestCase):
 
@@ -36,7 +41,19 @@ class TestJwtKey(TestCase):
         cls.mock_path = 'https://pyrates/jwks'
         cls.mock_token = 'token'
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+
+        mock_jwt_jwks_client_PyJWKClient_context.stop()
+        mock_jwt_PyJWKClient_context.stop()
+
+        importlib.reload(jwt_key)
+
+        return super().tearDownClass()
+
     def setUp(self):
+
+        self.mock_algorithm = 'RS256'
 
         # The "instantiated" object created by PyJWKClient must be reset
         # and the return_value and side_effect reinitalized after each test,
@@ -57,11 +74,19 @@ class TestJwtKey(TestCase):
         mock_jwt_PyJWKClient_context.target.PyJWKClient.return_value = mock_client
         mock_jwt_PyJWKClient_context.target.PyJWKClient.side_effect = None
 
+        # Mock jwt.get_unverified_header; this is a fixed function so it will be OK here.
+
+        self.mock_jwt_get_unverified_header_context = patch('jwt.get_unverified_header')
+        self.mock_jwt_get_unverified_header_context.start()
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.return_value = { 'alg': self.mock_algorithm }
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.side_effect = None
+        self.addCleanup(self.mock_jwt_get_unverified_header_context.stop)
+
     def test_load_key(self):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
-        self.assertEqual(TestJwtKey.mock_key, result)
+        self.assertEqual(( TestJwtKey.mock_key, self.mock_algorithm), result)
 
     def test_client_initialized_with_path(self):
 
@@ -83,11 +108,17 @@ class TestJwtKey(TestCase):
 
             self.assertTrue(False)
 
-    def test_request_with_token(self):
+    def test_get_signing_key_with_token(self):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
         mock_client.get_signing_key_from_jwt.assert_called_once_with(TestJwtKey.mock_token)
+
+    def test_get_algorithm_with_token(self):
+        
+        result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
+
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.assert_called_once_with(TestJwtKey.mock_token)
 
     def test_None_on_read_error(self):
 
@@ -95,7 +126,23 @@ class TestJwtKey(TestCase):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
-        self.assertEqual(None, result)
+        self.assertEqual(( None, None ), result)
+
+    def test_None_on_get_algorithm_error(self):
+        
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.side_effect = Exception
+
+        result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
+
+        self.assertEqual(( None, None ), result)
+
+    def test_None_on_get_algorithm_no_algorithm(self):
+        
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.return_value = { 'xyz': self.mock_algorithm }
+
+        result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
+
+        self.assertEqual(( None, None ), result)
 
     # This is a test we would like to have, but impossible to implement given the circumstances.
     # The side_effect in the mocks becomes a list iterator, so reassigning it is a no-op. And
@@ -109,8 +156,5 @@ class TestJwtKey(TestCase):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
-        self.assertEqual(None, result)    # This is what we are looking for.
-        # self.assertEqual(TestJwtKey.mock_key, result)  # This is what we get.
-
-if __name__ == '__main__':
-    unittest.main()
+        # self.assertEqual(( None, None ), result)    # This is what we are looking for.  
+        self.assertEqual(( None, None ), result)  # This is what we get.
