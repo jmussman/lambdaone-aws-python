@@ -94,13 +94,15 @@ Install both of these with pip at the command line:
     $ pip -r requirements.txt
     $ pip -r devrequirements.txt
     ```
-1. Now the environment is ready to begin development or run the existing tests.
+1. The environment is ready to begin development or run the existing tests.
+Skip over the section on *GitHub Codespaces* and continue with *Tests*.
 
 #### Run the tests in GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=858797673) 
 
 Click the button to open the project in GitHub Codespaces.
+Click the button on the configuration page to proceed.
 Wait for codespaces to open and initialize, watch to see that the *pip* commands to install the packages finish executing.
 In the VSCode Run and Debug panel execute *All Tests* or *Coverage All Tests*".
 A new terminal window will open to display the results (and a second window for the report if code coverage is run).
