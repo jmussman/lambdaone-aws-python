@@ -205,6 +205,14 @@ the Docker image, that is where it must be placed and it always be just a file n
 
 The signature key path and the JWKS path are mutually exclusive, and the jwt_key module will refuse a configuration with both.
 
+There are many reasons to consider using a third-party identity provider, one of which the focus is entirely
+on the IdP, the configuration and branding are much more adaptable, and the administration is much easier to work with in production. 
+Configuring a real authorization server is really outside the scope of this document, but as a starting
+point you may register for a free Okta CIC developer tenant to play with by clicking the *Sign up* button at https://developer.auth0.com.
+Once you have a tenant, you need to configure an API integration with the scopes that the lambda will expect (https://auth0.com/docs/get-started/apis),
+configure an application that authenticates against this IdP and receives an access token
+to call the lambda with (https://auth0.com/docs/get-started), and of course configure the .env file properly with the audience, issuer, require, and jwkspath.
+
 If the *REQUIRE* property is not set, a token is not required for the lambda to return a value.
 
 #### Testing against a Docker container
