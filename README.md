@@ -94,7 +94,7 @@ Install both of these with pip at the command line:
     $ pip -r devrequirements.txt
     ```
 1. The environment is ready to begin development or run the existing tests.
-Skip over the next section on *GitHub Codespaces* and continue with *Tests*.
+Skip over the next section on *GitHub Codespaces* and continue with [*Tests*](#tests).
 
 #### Run the tests in GitHub Codespaces
 
