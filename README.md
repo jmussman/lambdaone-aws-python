@@ -127,10 +127,14 @@ The button will replace the repository page in this tab with the Codespace, so r
 Click the button above (after reading the instructions) to open the project in GitHub Codespaces.
 On the project configuration page presented click the *Create codespace* button to proceed.
 The codespace will go through several initialization steps.
-After the README.md file is displayed a terminal window named *Codespace* will open to run the script which finishes installation.
 
-When the *pip* commands launched by the script finish in this window, and when the terminal window is left at a command prompt,
-it is safe to close the terminal and start working with the project.
+This README.md file will be displayed in the container, when it appears find this section to continue with the instructions.
+
+After the README.md file is displayed, a terminal window named *Codespace* will open automatically as a container
+to run the script which finishes installation.
+
+When the *pip* commands launched by the script finish in that terminal a command prompt will appear, and
+it will be safe to close the terminal and start working with the project.
 
 #### Tests
 
