@@ -75,7 +75,6 @@ Python 3.8 or later is required; this project was built and tested with version 
 
 If you prefer to run the project in GitHub Codespaces [jump ahead](#run-the-tests-in-github-codespaces)
 
-
 #### Instructions
 
 1. Clone this project locally with *get clone git@github.com:jmussman/lambdaone-aws-python.git*.
@@ -101,11 +100,14 @@ Skip over the next section on *GitHub Codespaces* and continue with *Tests*.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=858797673) 
 
-Click the button to open the project in GitHub Codespaces.
-Click the button on the configuration page to proceed.
-Wait for codespaces to open and initialize, watch to see that the *pip* commands to install the packages finish executing.
-In the VSCode Run and Debug panel execute *All Tests* or *Coverage All Tests*".
-A new terminal window will open to display the results (and a second window for the report if code coverage is run).
+Click the button above to open the project in GitHub Codespaces (it will open in this tab).
+Click the *Create codespace* button on the configuration page to proceed.
+The codespace will go through several initialization steps.
+After the README.md file is displayed a terminal window named *Codespace* will open to run the script to finish installation.
+
+When the *pip* commands finish in this window and when the terminal window is left at a command prompt, it is safe to close the terminal and continue.
+In the VS Code Run and Debug panel execute the task *All Tests* or *Coverage All Tests*".
+A new terminal window named *Python* will open to display the results (and a second window for the report if code coverage is run).
 
 ### Tests
 
