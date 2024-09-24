@@ -91,6 +91,7 @@ The project was built and tested with Python 3.12.2 via Anaconda.
     * Add the Microsoft "Python extension for Visual Studio Code".
     This should also add the Microsoft "Python Debugger extension for Visual Studio Code", but
     if it does not make sure this is added too.
+* Docker, if it is required to run and/or test the project in a Docker container.
 
 #### Instructions
 
@@ -194,8 +195,13 @@ the Docker image, that is where it must be placed and it always be just a file n
 
 The signature key path and the JWKS path are mutually exclusive, and the jwt_key module will refuse a configuration with both.
 
-
 If the *REQUIRE* property is not set, a token is not required for the lambda to return a value.
+
+#### Testing against a Docker container
+
+The project is set up to build and deploy to a Docker container to make sure it is accessible and runs in that environment.
+Docker is not included in the integration tests because it may not be possible to use in a local environment.
+Also, not everyone will build and deploy a Docker image; an alternative is to make a zip file from the project and deploy that.
 
 ## Deploy to AWS
 
