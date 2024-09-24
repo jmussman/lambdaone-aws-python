@@ -138,9 +138,13 @@ it will be safe to close the terminal and start working with the project.
 
 #### Tests
 
-Open the VS Code *Run and Debug* panel from the toolbar and execute either task *All Tests* or *Coverage All Tests*".
+Open the VS Code *Run and Debug* panel from the toolbar and execute either of the tasks "*All Tests*" or "*Coverage All Tests*".
 A new terminal window named *Python* will open to display the resultsof the tests.
 If code coverage is selected, the report will open in its own terminal window.
+
+There are two test patterns used in the project that may be of interest to help write your own tests:
+
+##### Integration Tests with Live Servers
 
 The integration test for *lambda_function, test_lambda_function.py*, requires a
 JWKS endpoint at an authorization server to provide the public signing keys in JSON format.
@@ -149,13 +153,15 @@ the test/resources folder.
 The hardwired JSON key is in the resources folder.
 The server starts when the test class is loaded, and is shut down when the test class ends.
 
+##### Hoisting Class Definitions for Import Styles
+
 *test_jwt_key* includes an example of mocking out a class definition.
 The *jwt_key* module uses the *jwt.jwks_client.PyJWKClient* class to retrieve the JWKS
 public keys from the IdP.
 The problem is there are three ways the class could be referenced by the code under test (CUT).
 The class is referenced in two places and can be used with a full qualified name from either
 location: jwt.jwks_client.PyJWKClient or jwt.PyJWKClient.
-the third way is for the CUT could load the class as a property using the form
+The third way is for the CUT could load the class as a property using the form
 "from jwt.jwks_client import PyJWKClient" or "from jwt import PYJWKClient".
 In that case the reference to the class becomes a property of jwt_key.
 
