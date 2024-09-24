@@ -39,15 +39,26 @@ it is necessary as developers to have a full set of tests that make sure the pro
 These tests are also necessary for performing regression testing
 when new features are added or issues are fixed.
 
-## Project
+The Lambda Development Project section will explore how to build, test, and extend the template, and the
+[Deploy to AWS](#deploy-to-aws) section below will address deployment using Docker or a zip file.
 
-### Layout
+## Lambda Development Project Template
+
+This section explores the layout of the project, the features, and how to test it.
+The ulitmate goal is to build on this project as a template for real-world functions.
+
+### Project Layout
+
+The project layout is visible in the repository before setting up the project, so it is addressed first.
 
 To start, AWS Lambda requires that the entry function be at the top of the task folder.
-If a more complex scenario requires multiple files, place the remaining code under an appropriate module name.
+It is not possible to move this, but it may be named anything that you like.
+If a more complex lambda scenario is decomposed into multiple files, place the remaining code under an appropriate package name
+at the top level.
 In this example, the main entry point is *lambda_function.py*, and the additional concerns
-are separated into files under the lambdaone module.
-The tests occupy a parallel structure under *test* to make it simple to exclude them from the container or zip file:
+are separated into files under the *lambdaone* package.
+The tests occupy a parallel structure under *test*.
+Separating the tests makes it simpler to exclude them from the deployment container or zip file:
 
 ```
 lambda_function.py
@@ -68,55 +79,67 @@ test/
             test_jwt_key.py
 ````
 
-### Initializing the development environment.
+### Initializing the local development environment.
 
-The expected integrated development environment (IDE) for this project is visual studio code.
-Python 3.8 or later is required; this project was built and tested with version 3.12.2.
+If you prefer, development may also be done in a [GitHub Codespaces](#run-the-tests-in-github-codespaces) environment, which is discussed in the next section.
 
-If you prefer to run the project in GitHub Codespaces [jump ahead](#run-the-tests-in-github-codespaces)
+The requirements for local development are:
+
+* Python 3.8 or later; any distribution, e.g. Anaconda, should be fine.
+The project was built and tested with Python 3.12.2 via Anaconda.
+* Visual Studio Code
+    * Add the Microsoft "Python extension for Visual Studio Code".
+    This should also add the Microsoft "Python Debugger extension for Visual Studio Code", but
+    if it does not make sure this is added too.
 
 #### Instructions
 
-1. Clone this project locally with *get clone git@github.com:jmussman/lambdaone-aws-python.git*.
+1. Clone this project locally with *get clone [git@github.com:jmussman/lambdaone-aws-python.git](it@github.com:jmussman/lambdaone-aws-python.git)*.
 1. Open the project in VS Code.
-1. In the project create a virtual python environment from the terminal.
-The folder name .env is important:
+1. Open an integrated terminal with with View &rarr; Terminal.
+Create a virtual python environment from the terminal.
+The folder name .venv is important ($ is the command prompt):
     ```
     $ python -m venv .venv
     ```
-1. From the VS Code command palette run *Python: Select Interpreter* and pick *.venv/bin/python*.
+1. Open the command palette with View &rarr; Command Palette...
+Seach for *Python: Select Interpreter* and click on it.
+Pick the python in the .venv folder, e.g. *Python 3.12.2 ('.venv') ./.venv/bin/python*.
 1. Recommended: open VS Code settings, search for *Python Terminal Activate Environment*, and make sure it is checked.
-This will run the activation script in each terminal window opened.
+It should be checked by default.
+This will run the virtual environment activation script in each terminal window opened, which is necessary for the *Run and Debug* panel commands.
 1. There are two sets of module requirements for the project, one for production and a second one with development dependencies.
-Install both of these with pip at the command line:
+Install both of these to the virtual environment (./.venv/lib) with pip at the command line:
     ```
-    $ pip -r requirements.txt
-    $ pip -r devrequirements.txt
+    $ pip install -r requirements.txt
+    $ pip install -r devrequirements.txt
     ```
 1. The environment is ready to begin development or run the existing tests.
 Skip over the next section on *GitHub Codespaces* and continue with [*Tests*](#tests).
 
-#### Run the tests in GitHub Codespaces
+#### Run the project in GitHub Codespaces
+
+The button will replace the repository page in this tab with the Codespace, so read all the instructions first!
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=858797673) 
 
-Click the button above to open the project in GitHub Codespaces (it will open in this tab).
-Click the *Create codespace* button on the configuration page to proceed.
+Click the button above (after reading the instructions) to open the project in GitHub Codespaces.
+On the project configuration page presented click the *Create codespace* button to proceed.
 The codespace will go through several initialization steps.
-After the README.md file is displayed a terminal window named *Codespace* will open to run the script to finish installation.
+After the README.md file is displayed a terminal window named *Codespace* will open to run the script which finishes installation.
 
-When the *pip* commands finish in this window and when the terminal window is left at a command prompt, it is safe to close the terminal and continue.
-In the VS Code Run and Debug panel execute the task *All Tests* or *Coverage All Tests*".
-A new terminal window named *Python* will open to display the results (and a second window for the report if code coverage is run).
+When the *pip* commands launched by the script finish in this window, and when the terminal window is left at a command prompt,
+it is safe to close the terminal and start working with the project.
 
-### Tests
+#### Tests
 
-Run the unit and integration tests from the *Run and Debug* panel using the *All Tests* or *Coverage All Tests* launch configuration.
-The tests will run in the terminal window labeled *Python Debug Console*.
-If coverage is selected, the code coverage report will open in another terminal window.
+Open the VS Code *Run and Debug* panel from the toolbar and execute either task *All Tests* or *Coverage All Tests*".
+A new terminal window named *Python* will open to display the resultsof the tests.
+If code coverage is selected, the report will open in its own terminal window.
 
-The integration test for *lambda_function, test_lambda_function.py*, requires a JWKS server to provide the key in JSON format.
-This is handled by creating a Python HTTP server with a SimpleHTTPRequestHandler for the requests that serves files from
+The integration test for *lambda_function, test_lambda_function.py*, requires a
+JWKS endpoint at an authorization server to provide the public signing keys in JSON format.
+This is handled internally in the test fixture by creating a Python HTTP server with a SimpleHTTPRequestHandler for the requests that serves files from
 the test/resources folder.
 The hardwired JSON key is in the resources folder.
 The server starts when the test class is loaded, and is shut down when the test class ends.
@@ -124,41 +147,57 @@ The server starts when the test class is loaded, and is shut down when the test 
 *test_jwt_key* includes an example of mocking out a class definition.
 The *jwt_key* module uses the *jwt.jwks_client.PyJWKClient* class to retrieve the JWKS
 public keys from the IdP.
-The problem is there are six ways the class could be referenced by the code under test (CUT).
+The problem is there are three ways the class could be referenced by the code under test (CUT).
 The class is referenced in two places and can be used with a full qualified name from either
 location: jwt.jwks_client.PyJWKClient or jwt.PyJWKClient.
-To compund the problem the CUT could load the class as a property using the form
+the third way is for the CUT could load the class as a property using the form
 "from jwt.jwks_client import PyJWKClient" or "from jwt import PYJWKClient".
-In that case the reference becomes a property of jwt_key.
+In that case the reference to the class becomes a property of jwt_key.
 
-So to do an opqaue-view test both of the references in the *jwt* module must be mocked along
+To perform an opqaue-view test both of the references in the *jwt* module must be mocked, along
 with the property that could be imported into jwt_key.
 The *setUpClass* method in *test_jwt* mocks the two references, and then hoists them above the
-import in the *jwt_key* module by reloading the module.
-The reference to the original class definition is preserved, and in the *teearDownClass* method
-it replaces the reference and then reloads both the *jwt* and *jwt_key* modules.
+import in the *jwt_key* module by reloading the module, causing the class reference to be reloaded in that module.
+The setup method preserves the reference to the original class definition, and in the *teearDownClass* method
+the original reference is put back and and both the *jwt* and *jwt_key* modules are reloaded to reset them.
 
-### Authorization
+#### Extending the template and using third-party authorization
 
-One of the goals is for authorization from another IdP, such as Okta CIC.
-The *.env* file contains the externalized configuration for the authorization server:
+One of the goals is for authorization from another IdP, such as Okta CIC (formally Auth0).
+The *.env* file contains the externalized configuration for the authorization server, e.g.:
 
 ```
 AUDIENCE=https://treasure
 ISSUER=https://pid.pyrates.live
 JWKSPATH=https://pid.pyrates.live/oauth2/v1/keys
 REQUIRE=treasure:read
-SIGNATUREKEYPATH=
+SIGNATUREKEYPATH=public.pem
 ```
 
-The audience and issuer settings must match what the IdP produces.
-If the signatures are obtained with JWKS, the variable must be the URI of the JWKS endpoint at the authorization server.
-The signature key path and the JWKS path are mutually exclusive.
-THe signature key path is used to point to a local file with the PEM public key to verify the token signature.
-If require is set too one or more scopes, a token granting those scopes must be sent as the authorization header property;
-this is a *bearer* token in the form *authorization: bearer \<token\>*.
+Authorization from a JSON Web Token (JWT) will only be performed by the lambda if the *REQUIRE* property is set to
+one or more scopes.
+Separate multiple scopes with commas (spaces are allowed).
 
-If the *require* property is not set, a token is not required for the lambda to return a value.
+When authorization is used, the token granting those scopes must be sent as the authorization header property in
+the HTTP request in the form of a bearer token:
+
+```
+authorization: bearer <token string>.
+```
+
+When tokens are used, the *AUDIENCE* and *ISSUER* properties must match what the IdP is expected to include in the JWT.
+
+If the signatures are to be obtained with JWKS, the *JWKSPATH* property must be the URI of the JWKS endpoint at the authorization server.
+The parallel *SIGNATUREKEYPATH* property references a local file for a PEM format key.
+Because AWS Lambda requires that all the files be at the top of
+the Docker image, that is where it must be placed and it always be just a file name.
+
+The signature key path and the JWKS path are mutually exclusive, and the jwt_key module will refuse a configuration with both.
+
+
+If the *REQUIRE* property is not set, a token is not required for the lambda to return a value.
+
+## Deploy to AWS
 
 ### Building a container deployment
 
