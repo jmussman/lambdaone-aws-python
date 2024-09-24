@@ -13,3 +13,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive
 
 RUN curl -L -o /tmp/gh.deb https://github.com/cli/cli/releases/download/v2.53.0/gh_2.53.0_linux_amd64.deb
 RUN apt install -y /tmp/gh.deb
+
+RUN curl -L -o /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+RUN cd /tmp; unzip ./awscliv2.zip; ./aws/install
