@@ -95,7 +95,7 @@ Install both of these with pip at the command line:
     $ pip -r devrequirements.txt
     ```
 1. The environment is ready to begin development or run the existing tests.
-Skip over the section on *GitHub Codespaces* and continue with *Tests*.
+Skip over the next section on *GitHub Codespaces* and continue with *Tests*.
 
 #### Run the tests in GitHub Codespaces
 
@@ -156,12 +156,26 @@ THe signature key path is used to point to a local file with the PEM public key 
 If require is set too one or more scopes, a token granting those scopes must be sent as the authorization header property;
 this is a *bearer* token in the form *authorization: bearer \<token\>*.
 
-If require is not set, a token is not required for the lambda to return a value.
+If the *require* property is not set, a token is not required for the lambda to return a value.
 
 ### Building a container deployment
 
-The project is built from the [AWS Base Image for Lambda](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions).
+The advantage of a container deployment is the image may locally be tested in Docker.
+
+This project originates from the [AWS Base Image for Lambda](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions).
+There is not much point in repeating the details for deployement,
+they can be found on the [Create a Lambda function using a container image](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#runtimes-images-lp) page.
+[Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html) also reiterates the requirements,
+covers building the application, the Dockerfile, using Docker to build and test the docker image, and most importantly,
+connecting to and deploying the Docker project to AWS.
 
 ### Building a zip file deployment
 
 The base image is irrelevant if a zip file will be used for deployment; only the code is necessary.
+[Working with .zip file archives for Python Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html) provides
+the details of putting the deployment together.
+The section on *Creating a .zip deployment package with dependencies* goes through the process of creating the zip file.
+
+Per the instructions the packages in requirements.txt but be included at the root of the zip file.
+The instructions use pip to install the packages into a separate folder, *.packages*.
+However the packages are already installed into the *.venv/lib* folder so the packages found there may be added to the root of the zip file.
