@@ -152,7 +152,7 @@ SIGNATUREKEYPATH=
 ```
 
 The audience and issuer settings must match what the IdP produces.
-If the signatures are obtained with JWKS, the variable must be the URI of the server.
+If the signatures are obtained with JWKS, the variable must be the URI of the JWKS endpoint at the authorization server.
 The signature key path and the JWKS path are mutually exclusive.
 THe signature key path is used to point to a local file with the PEM public key to verify the token signature.
 If require is set too one or more scopes, a token granting those scopes must be sent as the authorization header property;
@@ -172,6 +172,8 @@ covers building the application, the Dockerfile, using Docker to build and test 
 connecting to and deploying the Docker project to AWS.
 
 ### Building a zip file deployment
+
+A zip file is the simplest form of deploying a lambda function to AWS.
 
 The base image is irrelevant if a zip file will be used for deployment; only the code is necessary.
 [Working with .zip file archives for Python Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html) provides
