@@ -221,6 +221,58 @@ The project is set up to build and deploy to a Docker container to make sure it 
 Docker is not included in the integration tests because it may not be possible to use in a local environment.
 Also, not everyone will build and deploy a Docker image; an alternative is to make a zip file from the project and deploy that.
 
+If you have Docker installed, or you are running in a Codespace (which has dockerd installed), run the application this way:
+
+1. Make sure that Docker is running.
+In the Codespace open a terminal window and execute:
+    ```
+    dockerd &
+    ```
+    If you are using Microsoft Windows, MacOS, or Linux locally, consider installing [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+1. Build the docker image.
+    Note that this image name differes from the AWS documentation:
+    ```
+    docker build --platform linux/amd64 -t lambdaone-image:test .
+    ```
+1. Build and run the Docker image from the product:
+
+    ```
+    docker run --platform linux/amd64 -p 9000:8080 lambdaone-image:test
+    ```
+1. How to check the results varies depending on the development platform:
+    #### Codespace
+    1. The container is forwarded from internal port 8080 to port 9000 in the Codespace.
+        The Codespace is forwarding port 9000 to an external port on the Internet, the URL for this
+        may be found under the "PORTS" tab in VS Code (your name will differ):
+        ![Forwarded Ports](./.assets/forwarded-ports.jpg)
+    1. On a computer *outside* the Codespace, visit the port.
+        One way is to copy the link and paste it into a browser:
+        ```
+        https://{{CODESPACE_NAME}}-9000.app.github.dev/
+        ```
+    1. The other way is to use *curl* in a MacOS or Linux to retrieve the output of the lambda:
+        ```
+        curl https://{{process.env.CODESPACE_NAME}}-9000.app.github.dev/
+        ```
+
+    #### Local Computer
+    1. One way is to visit the port in the browser; copy and paste the link:
+    1. The other way is to use *curl* in a MacOS or Linux to retrieve the output of the lambda:
+1. Get the container ID from Docker, and terminate the container:
+    ```
+    docker ps
+    ```
+    ```
+    docker kill <container id>
+    ```
+1. Find and remove the docker image if it will need to be rebuilt to try the next test:
+    ```
+    docker images
+    ```
+    ```
+    docker 
+    ```
+
 ## Deploy to AWS
 
 ### Building a container deployment
@@ -233,6 +285,13 @@ they can be found on the [Create a Lambda function using a container image](http
 [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html) also reiterates the requirements,
 covers building the application, the Dockerfile, using Docker to build and test the docker image, and most importantly,
 connecting to and deploying the Docker project to AWS.
+
+Working from those instructions, everything left to do is under
+[Using an AWS base image for Python](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions)/Deploying the Image:
+
+1. 
+
+
 
 ### Building a zip file deployment
 

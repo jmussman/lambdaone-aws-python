@@ -2,7 +2,8 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
-from dotenv import load_dotenv
+import dotenv
+import importlib
 import os
 import time
 from unittest import TestCase
@@ -25,8 +26,26 @@ class TestLambdaFunction(TestCase):
         cls.mock_key = '-----BEGIN PUBLIC KEY-----MIIBIjAN...'
         cls.mock_algorithm = 'RS256'
 
-        load_dotenv()
+        # "Hoist" the mock of dotenv.load_dotenv. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
 
+        cls.mod_dotenv_load_dotenv = dotenv.load_dotenv
+
+        cls.mock_dotenv_load_dotenv = patch('dotenv.load_dotenv', return_value = None)
+        cls.mock_dotenv_load_dotenv.start()
+
+        importlib.reload(lambda_function)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+
+        cls.mock_dotenv_load_dotenv.stop()
+
+        dotenv.load_dotenv = cls.mod_dotenv_load_dotenv
+
+        importlib.reload(lambda_function)
+
+        return super().tearDownClass()
+    
     def setUp(self):
 
         self.mock_audience = os.environ['AUDIENCE'] = 'https://treasure'
@@ -84,6 +103,16 @@ class TestLambdaFunction(TestCase):
         os.environ['JWKSPATH'] = 'https://pyrates/jwks'
         os.environ['REQUIRE'] = 'treasure:read'
         os.environ['SIGNATUREKEYPATH'] = 'public.pem'
+
+        result = lambda_function.handler(self.mock_event, self.mock_context)
+
+        self.assertEqual(400, result['statusCode'])
+
+    def test_rejects_niether_jwks_and_signature(self):
+
+        os.environ.pop('JWKSPATH', None)
+        os.environ['REQUIRE'] = 'treasure:read'
+        os.environ.pop('SIGNATUREKEYPATH', None)
 
         result = lambda_function.handler(self.mock_event, self.mock_context)
 
@@ -157,3 +186,11 @@ class TestLambdaFunction(TestCase):
         result = lambda_function.handler(self.mock_event, self.mock_context)
 
         self.assertEqual(403, result['statusCode'])
+
+    def test_passes_missing_require(self):
+
+        os.environ.pop('REQUIRE', None)
+
+        result = lambda_function.handler(self.mock_event, self.mock_context)
+
+        self.assertIn('Hello, Mock!', result)

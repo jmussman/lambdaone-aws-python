@@ -9,11 +9,15 @@
         }
     },
     "forwardPorts": [
-        8000
+        8000,
+        9000
     ],
     "portsAttributes": {
         "8800": {
             "label": "jwks"
+        },
+        "9000": {
+            "label": "docker"
         }
     },
     "postAttachCommand": ". ./.devcontainer/postAttachCommand.sh"

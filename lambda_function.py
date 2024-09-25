@@ -18,24 +18,26 @@ def handler(event, context):
     load_dotenv()
 
     result = None
-    require = os.environ['REQUIRE']
+    require = os.environ.get('REQUIRE')
 
     if require:
 
         # Configuration.
 
-        audience = os.environ['AUDIENCE']
-        issuer = os.environ['ISSUER']
+        audience = os.environ.get('AUDIENCE')
+        issuer = os.environ.get('ISSUER')
         require = re.split(r'\s*,\s*', require)
         bearer_token = event['headers']['authorize']
         token = re.sub(r'^bearer\s*(.*)$', r'\1', bearer_token)
         
         # Look for the JWKS URI or the local path.
 
-        jwks_path = os.environ['JWKSPATH']
-        signature_key_path = os.environ['SIGNATUREKEYPATH']
+        jwks_path = os.environ.get('JWKSPATH')
+        signature_key_path = os.environ.get('SIGNATUREKEYPATH')
 
-        if len(jwks_path) > 0 and len(signature_key_path) > 0:
+        x = jwks_path is None and signature_key_path is None
+
+        if (jwks_path is None and signature_key_path is None) or (len(jwks_path) > 0 and len(signature_key_path) > 0):
 
             result = { 'statusCode': 400, 'body': json.dumps('Bad request') }
 
