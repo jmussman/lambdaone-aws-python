@@ -99,9 +99,9 @@ The project was built and tested with Python 3.12.2 via Anaconda.
 1. Open the project in VS Code.
 1. Open an integrated terminal with with View &rarr; Terminal.
 Create a virtual python environment from the terminal.
-The folder name .venv is important ($ is the command prompt):
+The folder name .venv is important:
     ```
-    $ python -m venv .venv
+    python -m venv .venv
     ```
 1. Open the command palette with View &rarr; Command Palette...
 Seach for *Python: Select Interpreter* and click on it.
@@ -112,8 +112,8 @@ This will run the virtual environment activation script in each terminal window 
 1. There are two sets of module requirements for the project, one for production and a second one with development dependencies.
 Install both of these to the virtual environment (./.venv/lib) with pip at the command line:
     ```
-    $ pip install -r requirements.txt
-    $ pip install -r devrequirements.txt
+    pip install -r requirements.txt
+    pip install -r devrequirements.txt
     ```
 1. The environment is ready to begin development or run the existing tests.
 Skip over the next section on *GitHub Codespaces* and continue with [*Tests*](#tests).
