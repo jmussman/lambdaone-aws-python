@@ -221,7 +221,8 @@ The project is set up to build and deploy to a Docker container to make sure it 
 Docker is not included in the integration tests because it may not be possible to use in a local environment.
 Also, not everyone will build and deploy a Docker image; an alternative is to make a zip file from the project and deploy that.
 
-If you have Docker installed, or you are running in a Codespace (which has dockerd installed), run the application this way:
+If you have Docker installed, or you are running in a Codespace (which has dockerd installed), run the application using the following steps.
+These instructions are more complete than those in the AWS documentation, they do not remove the container or image when finished:
 
 1. Make sure that Docker is running.
 In the Codespace open a terminal window and execute:
@@ -239,39 +240,41 @@ In the Codespace open a terminal window and execute:
     ```
     docker run --platform linux/amd64 -p 9000:8080 lambdaone-image:test
     ```
-1. How to check the results varies depending on the development platform:
-    #### Codespace
-    1. The container is forwarded from internal port 8080 to port 9000 in the Codespace.
-        The Codespace is forwarding port 9000 to an external port on the Internet, the URL for this
-        may be found under the "PORTS" tab in VS Code (your name will differ):
-        ![Forwarded Ports](./.assets/forwarded-ports.jpg)
-    1. On a computer *outside* the Codespace, visit the port.
-        One way is to copy the link and paste it into a browser:
-        ```
-        https://{{CODESPACE_NAME}}-9000.app.github.dev/
-        ```
-    1. The other way is to use *curl* in a MacOS or Linux to retrieve the output of the lambda:
-        ```
-        curl https://{{process.env.CODESPACE_NAME}}-9000.app.github.dev/
-        ```
+1. The lambda function is not set up for a GET call from a web browser.
+The Docker image is set up so the port is forwarded to port 9000 on localhost.
+Use the *curl* command (in Windows PowerShell, MacOS, Linux) to make the call and check the results:
+    ```
+    curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+    ```
+1. The Codespace is forwarding port 9000 to an external port on the Internet, the URL for this
+    may be found under the "PORTS" tab in VS Code (the generated name in each Codespace will differ):
+    ![Forwarded Ports](./.assets/forwarded-ports.jpg)
+    Once the URL is know, a curl command from outside the Codespace 
 
-    #### Local Computer
-    1. One way is to visit the port in the browser; copy and paste the link:
-    1. The other way is to use *curl* in a MacOS or Linux to retrieve the output of the lambda:
-1. Get the container ID from Docker, and terminate the container:
     ```
-    docker ps
+    curl "https://<codespace URL>/2015-03-31/functions/function/invocations" -d '{}'
     ```
+1. Get the container ID from Docker:
     ```
-    docker kill <container id>
+    docker container ls
     ```
-1. Find and remove the docker image if it will need to be rebuilt to try the next test:
+1. Once the container ID is known, terminate the container:
     ```
-    docker images
+    docker kill <container ID>
     ```
+1. After terminating the container, destroy it:
     ```
-    docker 
+    docker container rm <container ID>
     ```
+1. If the Docker image will be modified and rebuilt:
+    1. Find the ID of the Docker image:
+        ```
+        docker images ls
+        ```
+    1. Delete the docker image:
+        ```
+        docker image rm <image ID>
+        ```
 
 ## Deploy to AWS
 

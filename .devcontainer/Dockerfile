@@ -15,4 +15,5 @@ RUN curl -L -o /tmp/gh.deb https://github.com/cli/cli/releases/download/v2.53.0/
 RUN apt install -y /tmp/gh.deb
 
 RUN curl -L -o /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-RUN cd /tmp; unzip ./awscliv2.zip; ./aws/install
+RUN unzip /tmp/awscliv2.zip -d /tmp
+RUN /tmp/aws/install
