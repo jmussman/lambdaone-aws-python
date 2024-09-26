@@ -2,6 +2,8 @@
 [//]: # (Copyright © 2024 Joel A Mussman. All rights reserved.)
 [//]: #
 
+{{ process.env.HOME }}
+
 ![Banner Light](./.assets/lambdaone-aws-python-light.png#gh-light-mode-only)
 ![banner Dark](./.assets/lambdaone-aws-python-dark.png#gh-dark-mode-only)
 
@@ -11,11 +13,20 @@
 
 LambdaOne is a simple AWS lambda project with the goal of:
 
-* Providing a template building an AWS Lambda function locally
+* Providing a template building an AWS Lambda function using Python locally
 * Using a third-party identity provider (IdP) for authorization
 * Demonstrating local unit and integration testing, especially the dificulties of mocking class definitions
 * Build a deployable Lambda using either a container or zip file
 
+This project was created as an example if you prefer to use Python.
+If you are looking for a comparison of Python vs JavaScript vs anything else you can find arguments for each in every direction you look.
+Here is an article which claims the Python duration is about 30% less than NodeJS: https://antonputra.com/python/python-vs-nodejs-benchmark/#performance-benchmark,
+and that performance is saving money using AWS.
+On the other hand, this article argues that NodeJS deploys smaller packages because of more concise shared resources, and that is a clear
+savings because AWS charges for space too: https://betterdev.blog/aws-lambda-runtime-nodejs-python/.
+Obviously if you are not decided you have a choice to make, and your choice may depend on your own study of your own problem domain.
+
+### Building an AWS Lambda locally with Python
 Start with the [AWS Lambda](https://docs.aws.amazon.com/lambda/) documentation and the
 [Developer Guide](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html), but
 almost nobody uses the embedded editor because developers rarely have access to deploy labda functions.
@@ -91,7 +102,10 @@ The project was built and tested with Python 3.12.2 via Anaconda.
     * Add the Microsoft "Python extension for Visual Studio Code".
     This should also add the Microsoft "Python Debugger extension for Visual Studio Code", but
     if it does not make sure this is added too.
-* Docker, if it is required to run and/or test the project in a Docker container.
+* Docker, if it is required to run and/or test the project in a Docker container, and for deployment as a conmtainer. 
+If you are using Microsoft Windows, MacOS, or Linux locally, consider installing [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+* AWS CLI, if it is required to deploy the project.
+* Zip (Winzip, etc.) if it is required to deploy the project as a zip file.
 
 #### Instructions
 
@@ -99,21 +113,22 @@ The project was built and tested with Python 3.12.2 via Anaconda.
 1. Open the project in VS Code.
 1. Open an integrated terminal with with View &rarr; Terminal.
 Create a virtual python environment from the terminal.
-The folder name .venv is important:
+The folder name .venv is important. The $ is the command prompt:
     ```
-    python -m venv .venv
+    $ python -m venv .venv
     ```
 1. Open the command palette with View &rarr; Command Palette...
 Seach for *Python: Select Interpreter* and click on it.
 Pick the python in the .venv folder, e.g. *Python 3.12.2 ('.venv') ./.venv/bin/python*.
+
 1. Recommended: open VS Code settings, search for *Python Terminal Activate Environment*, and make sure it is checked.
 It should be checked by default.
 This will run the virtual environment activation script in each terminal window opened, which is necessary for the *Run and Debug* panel commands.
 1. There are two sets of module requirements for the project, one for production and a second one with development dependencies.
 Install both of these to the virtual environment (./.venv/lib) with pip at the command line:
     ```
-    pip install -r requirements.txt
-    pip install -r devrequirements.txt
+    $ pip install -r requirements.txt
+    $ pip install -r devrequirements.txt
     ```
 1. The environment is ready to begin development or run the existing tests.
 Skip over the next section on *GitHub Codespaces* and continue with [*Tests*](#tests).
@@ -222,54 +237,54 @@ Docker is not included in the integration tests because it may not be possible t
 Also, not everyone will build and deploy a Docker image; an alternative is to make a zip file from the project and deploy that.
 
 If you have Docker installed, or you are running in a Codespace (which has dockerd installed), run the application using the following steps.
-These instructions are more complete than those in the AWS documentation, they do not remove the container or image when finished:
+These instructions are more precise than those in the AWS documentation:
 
 1. Make sure that Docker is running.
-In the Codespace open a terminal window and execute:
+In Codespace Docker is included and will already be started.
+This is verifiable in the terminal on any operating system with the command *docker ps*. The $ is the command prompt:
+    ```shell
+    $ docker ps
     ```
-    dockerd &
-    ```
-    If you are using Microsoft Windows, MacOS, or Linux locally, consider installing [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 1. Build the docker image.
     Note that this image name differes from the AWS documentation:
-    ```
-    docker build --platform linux/amd64 -t lambdaone-image:test .
+    ```shell
+    $ docker build --platform linux/amd64 -t lambdaone-image:test .
     ```
 1. Build and run the Docker image from the product:
-
-    ```
-    docker run --platform linux/amd64 -p 9000:8080 lambdaone-image:test
+    ```shell
+    $ docker run --platform linux/amd64 -p 9000:8080 lambdaone-image:test
     ```
 1. The lambda function is not set up for a GET call from a web browser.
 The Docker image is set up so the port is forwarded to port 9000 on localhost.
 Use the *curl* command (in Windows PowerShell, MacOS, Linux) to make the call and check the results:
-    ```
-    curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+    ```shell
+    $ curl -w "\n" "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
     ```
 1. The Codespace is forwarding port 9000 to an external port on the Internet, the URL for this
     may be found under the "PORTS" tab in VS Code (the generated name in each Codespace will differ):
-    ![Forwarded Ports](./.assets/forwarded-ports.jpg)
-    Once the URL is know, a curl command from outside the Codespace 
 
-    ```
-    curl "https://<codespace URL>/2015-03-31/functions/function/invocations" -d '{}'
+    ![Forwarded Ports](./.assets/forwarded-ports.jpg)
+    
+    Once the port forward URL is known construct and run a curl command outside the Codespace from the using port forward URL and the lambda URL:
+    ```shell
+    $ curl -w "\n" "<codespace port forward URL>/2015-03-31/functions/function/invocations" -d '{}'
     ```
 1. Get the container ID from Docker:
     ```
-    docker container ls
+    docker ps
     ```
 1. Once the container ID is known, terminate the container:
     ```
     docker kill <container ID>
     ```
-1. After terminating the container, destroy it:
+1. The following steps are not addressed in the AWS documentation. After terminating the container, destroy it:
     ```
     docker container rm <container ID>
     ```
-1. If the Docker image will be modified and rebuilt:
+1. If the Docker image will be modified and rebuilt the current one must be removed:
     1. Find the ID of the Docker image:
         ```
-        docker images ls
+        docker images
         ```
     1. Delete the docker image:
         ```
@@ -278,7 +293,7 @@ Use the *curl* command (in Windows PowerShell, MacOS, Linux) to make the call an
 
 ## Deploy to AWS
 
-### Building a container deployment
+### Building and deploying a container
 
 The advantage of a container deployment is the image may locally be tested in Docker.
 
@@ -290,21 +305,126 @@ covers building the application, the Dockerfile, using Docker to build and test 
 connecting to and deploying the Docker project to AWS.
 
 Working from those instructions, everything left to do is under
-[Using an AWS base image for Python](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions)/Deploying the Image:
+[Using an AWS base image for Python](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-instructions)/Deploying the Image.
+These instrucitons are more precise than the AWS instructions, for example they forgot to fix the region name in the docker command:
 
-1. 
+1. Using AWS CLI Authenticate to your Amazon ECR registry and link that to Docker. $ is the command prompt:
+    ```shell
+    $ aws ecr get-login-password --region <AWS region name> | docker login --username AWS --password-stdin <AWS account ID>.dkr.ecr.<AWS region name>.amazonaws.com
+    ```
 
+1. Create a repository in Amazon ECR, in the same region of course:
+    ```shell
+    $ aws ecr create-repository --repository-name lambdaone --region <AWS region name> --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+    ```
 
+1. Copy the *repositoryUri* from the output you see.
+Not from this example, but should look something like this:
+    ```json
+    {
+        "repository": {
+            "repositoryArn": "arn:aws:ecr:us-east-1:111122223333:repository/lambdaone",
+            "registryId": "111122223333",
+            "repositoryName": "hello-world",
+            "repositoryUri": "111122223333.dkr.ecr.us-east-1.amazonaws.com/lambdaone",
+            "createdAt": "2023-03-09T10:39:01+00:00",
+            "imageTagMutability": "MUTABLE",
+            "imageScanningConfiguration": {
+                "scanOnPush": true
+            },
+            "encryptionConfiguration": {
+                "encryptionType": "AES256"
+            }
+        }
+    }
+    ```
 
-### Building a zip file deployment
+1. Tag your local Docker image into the Amazon ECR respository:
+    ```shell
+    $ docker tag lambdaone-image:test <repositoryUri>:latest
+    ```
+
+1. Deploy from Docker to Amazon ECR:
+    ```shell
+    $ docker push <repositoryUri>:latest
+    ```
+
+1. If one does not exist, create an execution role at AWS for the lambda function:
+    ```shell
+    $ aws iam create-role \
+    --role-name lambda-ex \
+    --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}'
+    ```
+
+1. Create the lambda function at AWS. Replace the *repositoryUri* placeholder:
+    ```shell
+    $ aws lambda create-function \
+    --function-name hello-world \
+    --package-type Image \
+    --code ImageUri=<repositoryUri>:latest \
+    --role arn:aws:iam::<your ID>>:role/lambda-ex
+    ```
+
+1. Invoke the lambda function at AWS. The output will be written into the response.json file:
+    ```shell
+    $ aws lambda invoke --function-name lambdaone response.json
+    ```
+
+To update the function with a new version, rebuild the Docker image, upload it to the ECR repository, and call update-function-code:
+
+```shell
+$ docker build --platform linux/amd64 -t lambdaone-image:test .
+$ docker push <repositoryUri>:latest
+$ aws lambda update-function-code \
+--function-name lambdaone \
+--image-uri <repositoryUri>:latest \
+--publish
+```
+
+### Building and deploying a zip file
 
 A zip file is the simplest form of deploying a lambda function to AWS.
 
 The base image is irrelevant if a zip file will be used for deployment; only the code is necessary.
 [Working with .zip file archives for Python Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html) provides
 the details of putting the deployment together.
-The section on *Creating a .zip deployment package with dependencies* goes through the process of creating the zip file.
+Generally follow the instrucitons under the subheading *To create the deployment package (virtual environment)*.
 
 Per the instructions the packages in requirements.txt but be included at the root of the zip file.
-The instructions use pip to install the packages into a separate folder, *.packages*.
-However the packages are already installed into the *.venv/lib* folder so the packages found there may be added to the root of the zip file.
+The virtual environment is already created (and activated) in this project as *.venv*, and pip installed modules to *.venv/lib*.
+
+1. Skip the instructions about creating the virtual environment, installing the packages,
+locating the packages, and deactivating the virtual environment (steps 1 - 4 in the AWS instructions).
+
+1. Add the installed Python packages into the zip archive:
+    ```shell
+    $ cd .venv/lib
+    $ zip -r ../../lambdaone_deployment.zip .
+    ```
+
+1. Add the lambda function and submodules to the zip file:
+    ```shell
+    $ cd ../..
+    $ zip lambdaone_deployment.zip lambda_function.py lambdaone
+    ```
+
+1. The AWS instructions skip creating the execution role, this is how it is done:
+    ```shell
+    $ aws iam create-role \
+    --role-name lambda-ex \
+    --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}'
+    ```
+
+1. Create an AWS lambda function from the zip file:
+    ```shell
+    $ aws lambda create-function --function-name lambdaone \
+    --runtime python3.12 --handler lambda_function.handler \
+    --role arn:aws:iam::<AWS Account ID>:role/service-role/lambda-ex \
+    --zip-file fileb://lambdaone_deployment.zip
+    ```
+
+1. To update the lambda function after changes, rezip the project contents and execute:
+    ```shell
+    $ aws lambda update-function-code --function-name lambdaone \
+    --zip-file fileb://lambda_deployment.zip
+    ```

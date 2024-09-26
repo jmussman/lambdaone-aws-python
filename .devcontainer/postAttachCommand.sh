@@ -12,6 +12,7 @@ gh codespace ports visibility 8000:public 9000:public -c $CODESPACE_NAME
 curl -L -o /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
 unzip /tmp/awscliv2.zip -d /tmp
 sudo /tmp/aws/install
+rm -rf /tmp/awscli /tmp/aws
 
 # Create a virtual python environment for the project. This technically is not necessary because there is alreay
 # on in the Codespace, but this follows the same pattern used outside of a codespace.
