@@ -2,8 +2,6 @@
 [//]: # (Copyright © 2024 Joel A Mussman. All rights reserved.)
 [//]: #
 
-{{ process.env.HOME }}
-
 ![Banner Light](./.assets/lambdaone-aws-python-light.png#gh-light-mode-only)
 ![banner Dark](./.assets/lambdaone-aws-python-dark.png#gh-dark-mode-only)
 
@@ -14,11 +12,11 @@
 LambdaOne is a simple AWS lambda project with the goal of:
 
 * Providing a template building an AWS Lambda function using Python locally
-* Using a third-party identity provider (IdP) for authorization
+* ***Using a third-party identity provider (IdP) for authorization***
 * Demonstrating local unit and integration testing, especially the dificulties of mocking class definitions
 * Build a deployable Lambda using either a container or zip file
 
-This project was created as an example if you prefer to use Python.
+This project was created as an example if you prefer to use Python to achieve these goals.
 If you are looking for a comparison of Python vs JavaScript vs anything else you can find arguments for each in every direction you look.
 Here is an article which claims the Python duration is about 30% less than NodeJS: https://antonputra.com/python/python-vs-nodejs-benchmark/#performance-benchmark,
 and that performance is saving money using AWS.
@@ -428,3 +426,11 @@ locating the packages, and deactivating the virtual environment (steps 1 - 4 in 
     $ aws lambda update-function-code --function-name lambdaone \
     --zip-file fileb://lambda_deployment.zip
     ```
+
+## License
+
+The code is licensed under the MIT license. You may use and modify all or part of it as you choose, as long as attribution to the source is provided per the license. See the details in the [license file](./LICENSE.md) or at the [Open Source Initiative](https://opensource.org/licenses/MIT).
+
+
+<hr>
+Copyright © 2024 Joel A Mussman. All rights reserved.
