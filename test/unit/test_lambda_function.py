@@ -4,11 +4,13 @@
 
 import dotenv
 import importlib
+import logging
 import os
 import time
 from unittest import TestCase
 from unittest.mock import ANY, patch
 
+import lambdaone.logger
 import lambda_function
 
 class TestLambdaFunction(TestCase):
@@ -21,7 +23,7 @@ class TestLambdaFunction(TestCase):
 
         cls.mock_token = 'eyJhbGci...'
         cls.mock_token_payload = { 'aud': 'myaudience', 'issuer': 'someissuer', 'sub': '1234567890', 'issuedat': now, 'expiresat': expires, 'scopes': [ 'treasure:read' ]}        
-        cls.mock_event = { 'headers': { 'authorize': f'bearer {cls.mock_token}' }}
+        cls.mock_event = { 'headers': { 'authorization': f'bearer {cls.mock_token}' }}
         cls.mock_context = {}
         cls.mock_key = '-----BEGIN PUBLIC KEY-----MIIBIjAN...'
         cls.mock_algorithm = 'RS256'
@@ -32,15 +34,41 @@ class TestLambdaFunction(TestCase):
 
         cls.mock_dotenv_load_dotenv = patch('dotenv.load_dotenv', return_value = None)
         cls.mock_dotenv_load_dotenv.start()
+       
+        # "Hoist" the mock of logging error. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
+
+        cls.mod_logging_error = logging.error
+
+        cls.mock_logging_error = patch('logging.error', return_value = None)
+        cls.mock_logging_error.start()
+
+        # "Hoist" the mock of logger.baseConfig and logger.getLogger. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
+
+        cls.mod_logger_basicConfig = lambdaone.logger.basicConfig
+        cls.mod_logger_getLogger = lambdaone.logger.getLogger
+
+        cls.mock_logger_basicConfig = patch('lambdaone.logger.basicConfig', return_value = None)
+        cls.mock_logger_basicConfig.start()
+
+        cls.mock_logger_getLogger = patch('lambdaone.logger.getLogger', return_value = None)
+        cls.mock_logger_getLogger.start()
 
         importlib.reload(lambda_function)
 
     @classmethod
     def tearDownClass(cls) -> None:
 
+        cls.mock_logger_basicConfig.stop()
+        cls.mock_logger_getLogger.stop()
+
+        lambdaone.logger.basicConfig = cls.mod_logger_basicConfig
+        lambdaone.logger.getLogger = cls.mod_logger_getLogger
+
         cls.mock_dotenv_load_dotenv.stop()
+        cls.mock_logging_error.stop()
 
         dotenv.load_dotenv = cls.mod_dotenv_load_dotenv
+        logging.error = cls.mod_logging_error
 
         importlib.reload(lambda_function)
 

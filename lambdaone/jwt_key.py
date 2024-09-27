@@ -6,9 +6,12 @@
 
 import jwt
 from jwt import PyJWKClient
+from logging import error
 
 def load(path, token):
 
+    # This function is downstream so logging should already be established.
+    
     signing_key = None
     algorithm = None
 
@@ -24,6 +27,8 @@ def load(path, token):
 
     except Exception as e:
         
+        error(f'Bad signing key path or key not found: { e }')
+
         signing_key = None
         algorithm = None
 

@@ -4,6 +4,7 @@
 
 import importlib
 import jwt
+import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -44,6 +45,13 @@ class TestJwtKey(TestCase):
         cls.mock_jwt_PyJWKClient_context = patch('jwt.PyJWKClient', return_value = cls.mock_client)
         cls.mock_jwt_PyJWKClient_context.start()
 
+        # "Hoist" the mock of logging error.
+
+        cls.mod_logging_error = logging.error
+
+        cls.mock_logging_error = patch('logging.error', return_value = None)
+        cls.mock_logging_error.start()
+
         # If you are familar with jest or vitest in JavaScript, this call forces the mocks to be "hosited" in front of
         # the jwt_key module import. It is a reload but it is the same thing:
 
@@ -59,6 +67,12 @@ class TestJwtKey(TestCase):
         # then both modules reloaded for other test fixtures:
 
         jwt.PyJWKClient = jwt.jwks_client.PyJWKClient = cls.mod_jwt_jwks_client_PyJWKClient
+
+        # Put back the logging error.
+
+        cls.mock_logging_error.stop()
+
+        logging.error = cls.mod_logging_error
 
         importlib.reload(jwt)
         importlib.reload(jwt_key)

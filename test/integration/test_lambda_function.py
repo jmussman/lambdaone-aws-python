@@ -84,7 +84,7 @@ class TestLambdaFunction(TestCase):
         self.mock_require = os.environ['REQUIRE'] = TestLambdaFunction.mock_require
         self.mock_signature_key_path = os.environ['SIGNATUREKEYPATH'] = TestLambdaFunction.mock_signature_key_path
 
-        self.mock_event = { 'headers': { 'authorize': f'bearer { TestLambdaFunction.mock_token }' }}
+        self.mock_event = { 'headers': { 'authorization': f'bearer { TestLambdaFunction.mock_token }' }}
         self.mock_context = {}
 
     @classmethod
@@ -143,7 +143,7 @@ class TestLambdaFunction(TestCase):
 
         mock_token_payload = { 'aud': self.mock_audience, 'iss': self.mock_issuer, 'sub': self.mock_subject, 'issuedat': now, 'expiresat': expires, 'scopes': self.mock_scopes}        
         mock_token = jwt.encode(mock_token_payload, TestLambdaFunction.mock_private_key_b, algorithm = "RS256", headers = { 'kid': '5b889a22-6e44-45f7-8f5e-537db1d9b16e' })
-        mock_event = { 'headers': { 'authorize': f'bearer { mock_token }' }}
+        mock_event = { 'headers': { 'authorization': f'bearer { mock_token }' }}
 
         result = lambda_function.handler(mock_event, self.mock_context)
 
@@ -159,7 +159,7 @@ class TestLambdaFunction(TestCase):
 
         mock_token_payload = { 'aud': self.mock_audience, 'iss': self.mock_issuer, 'sub': self.mock_subject, 'issuedat': now, 'expiresat': expires, 'scopes': self.mock_scopes}        
         mock_token = jwt.encode(mock_token_payload, TestLambdaFunction.mock_private_key, algorithm = "RS256", headers = { 'kid': 'no-kid' })
-        mock_event = { 'headers': { 'authorize': f'bearer { mock_token }' }}
+        mock_event = { 'headers': { 'authorization': f'bearer { mock_token }' }}
 
         result = lambda_function.handler(mock_event, self.mock_context)
 

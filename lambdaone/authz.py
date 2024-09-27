@@ -3,8 +3,7 @@
 #
 
 import jwt
-from jwt import PyJWKClient
-import os
+from logging import error
 
 def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
 
@@ -30,6 +29,7 @@ def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
 
     except Exception as e:
         
+        error(f'Token not decoded: { e }')
         result = None
 
     return result

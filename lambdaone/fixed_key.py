@@ -5,8 +5,11 @@
 #
 
 import jwt
+from logging import error
 
 def load(path, token):
+
+    # This function is downstream so logging should already be established.
 
     signing_key = None
     algorithm = None
@@ -20,6 +23,8 @@ def load(path, token):
         algorithm = jwt.get_unverified_header(token)['alg']
 
     except Exception as e:
+        
+        error(f'Cannot read key file: { e }')
 
         signing_key = None
         algorithm = None

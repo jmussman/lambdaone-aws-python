@@ -2,7 +2,9 @@
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
 
+import importlib
 import jwt
+import logging
 import time
 from unittest import TestCase
 from unittest.mock import patch
@@ -24,6 +26,26 @@ class TestAuthZ(TestCase):
         cls.mock_token = 'token'
         cls.mock_token_payload = { 'aud': 'myaudience', 'issuer': 'someissuer', 'sub': '1234567890', 'issuedat': now, 'expiresat': expires, 'scopes': [ 'treasure:read' ]}        
         cls.mock_algorithm = 'RS256'
+       
+        # "Hoist" the mock of logging error. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
+
+        cls.mod_logging_error = logging.error
+
+        cls.mock_logging_error = patch('logging.error', return_value = None)
+        cls.mock_logging_error.start()
+
+        importlib.reload(authz)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+
+        cls.mock_logging_error.stop()
+
+        logging.error = cls.mod_logging_error
+
+        importlib.reload(authz)
+
+        return super().tearDownClass()
 
     @patch('jwt.decode')
     def test_accepts_valid_token(self, mock_jwt_decode):

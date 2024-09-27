@@ -13,6 +13,7 @@ LambdaOne is a simple AWS lambda project with the goal of:
 
 * Providing a template building an AWS Lambda function using Python locally
 * ***Using a third-party identity provider (IdP) for authorization***
+* Explore logging in an AWS Lambda function
 * Demonstrating local unit and integration testing, especially the dificulties of mocking class definitions
 * Build a deployable Lambda using either a container or zip file
 
@@ -165,6 +166,10 @@ This is handled internally in the test fixture by creating a Python HTTP server 
 the test/resources folder.
 The hardwired JSON key is in the resources folder.
 The server starts when the test class is loaded, and is shut down when the test class ends.
+
+##### Acceptance Tests with Docker
+
+First, strip the ".disabled" extension from the test/acceptance/test_lambda_function.py.disabled file.
 
 ##### Hoisting Class Definitions for Import Styles
 
