@@ -1,13 +1,16 @@
-# test_lambda_function.py.disable
+# test_lambda_function_docker.py.disable
 # Copyright © 2024 Joel A. Mussman. All rights reserved.
 #
-# This Docker-based acceptance test is disabled by default, since DOcker may not be available. To enable
+# This Docker-based integration test is disabled by default, since DOcker may not be available. To enable
 # and include the test strip ".disabled" off the file name. Docker is available in the Codespace
 # container.
 #
-# This acceptance test checks both the authorization using a mock access token against the application
+# This integration test checks both the authorization using a mock access token against the application
 # deployed to the Docker container, and the application in the container running without authorization
 # enabled.
+#
+# Debugging Note: sometimes the launching of the docker image (because it is in the background) can
+# be behind the steps in the test when breakpoints are set. This is inconsistent behavior.
 #
 
 import json
@@ -111,7 +114,7 @@ class TestLambdaFunction(TestCase):
 
     def test_hello_world_without_authorization(self):
 
-        os.system('docker build -f test/acceptance/Dockerfile.noauthz --platform linux/amd64 -t lambdaone-image:test .')
+        os.system('docker build -f test/integration/Dockerfile.noauthz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
 
         request = Request('http://localhost:9000/2015-03-31/functions/function/invocations', data = b'{}')
@@ -122,7 +125,7 @@ class TestLambdaFunction(TestCase):
 
     def test_hello_world_with_authorization(self):
 
-        os.system('docker build -f ./test/acceptance/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
+        os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
 
         # The local container does not translate from the HTTP headers to the event, that only happens at the AWS gateway.
@@ -146,7 +149,7 @@ class TestLambdaFunction(TestCase):
         mock_token_payload = { 'aud': TestLambdaFunction.mock_audience, 'iss': TestLambdaFunction.mock_issuer, 'sub': TestLambdaFunction.mock_subject, 'issuedat': now, 'expiresat': expires, 'scopes': TestLambdaFunction.mock_scopes}        
         mock_token = jwt.encode(mock_token_payload, mock_private_key_b, algorithm = 'RS256')
 
-        os.system('docker build -f ./test/acceptance/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
+        os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
         self.mock_event.get('headers')['authorization'] = f'bearer {mock_token}'
 
@@ -161,7 +164,7 @@ class TestLambdaFunction(TestCase):
     
     def test_hello_world_with_bad_authorization(self):
 
-        os.system('docker build -f ./test/acceptance/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
+        os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
         self.mock_event.get('headers').pop('authorization')
 

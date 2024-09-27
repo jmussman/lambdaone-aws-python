@@ -5,6 +5,8 @@
 import jwt
 from logging import error
 
+from lambdaone import logger
+
 def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
 
     # A valid decoded token is returned, or None if something went wrong. None should

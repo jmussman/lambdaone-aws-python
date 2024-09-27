@@ -8,9 +8,9 @@ import jwt
 from jwt import PyJWKClient
 from logging import error
 
-def load(path, token):
+from lambdaone import logger
 
-    # This function is downstream so logging should already be established.
+def load(path, token):
     
     signing_key = None
     algorithm = None

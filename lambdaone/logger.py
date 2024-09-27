@@ -1,14 +1,20 @@
 # logger.py
 # Copyright © 2024 Joel A Mussman. All rights reserved.
 #
+# Initialize the logging environment. In this case that means sending the
+# logging to stdout, where it will be picked up by the container logging.
+#
 
-from logging import basicConfig, Formatter, getLogger, StreamHandler
+from dotenv import load_dotenv
+from logging import error, Formatter, getLogger, StreamHandler
 import os
 import sys
 
+load_dotenv()
+
 # Log levels: DEBUG, INFO, WARNING, ERROR
 
-log_level = os.environ.get('LAMBDA_LOG_LEVEL', 'DEBUG')
+log_level = os.environ.get('LAMBDA_LOG_LEVEL', 'ERROR')
 logger = getLogger()
 logger.setLevel(log_level)
 
@@ -20,14 +26,4 @@ handler.setFormatter(formatter)
 
 logger.addHandler(handler)
 
-# If this is DOCKER but not AWS Lambda, route logging to a file. If AWS, logging is controlled by AWS.
-# If neither, logging is not configured so goes to STDERR.
-
-# if os.environ.get('DOCKER') is not None:
-
-#     basicConfig(filename = '/var/log/lambda.log',
-#                 encoding = 'utf-8',
-#                 filemode = 'a',
-#                 format = '{asctime} - {levelname} - {message}',
-#                 style = '{',
-#                 datefmt = '%Y-%m-%d %H:%M')
+error(f'log level {log_level}')
