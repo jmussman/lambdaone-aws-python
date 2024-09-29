@@ -77,6 +77,7 @@ lambdaone/
     fixed_key.py
     hello_world.py
     jwt_key.py
+    logger.py
 test/
     integration/
         test_lambda_function.py
@@ -91,7 +92,7 @@ test/
 
 ### Initializing the local development environment.
 
-If you prefer, development may also be done in a [GitHub Codespaces](#run-the-tests-in-github-codespaces) environment, which is discussed in the next section.
+If you prefer, development may also be done in a [GitHub Codespaces](#run-the-project-in-github-codespaces) environment, which is discussed in the next section.
 
 The requirements for local development are:
 
@@ -151,6 +152,9 @@ When the *pip* commands launched by the script finish in that terminal a command
 it will be safe to close the terminal and start working with the project.
 
 #### Tests
+
+If you are looking at this in a Codespace or are a local VS Code with Python installed you can [launch a CodeTour](command:codetour.startTour) to take guide you through
+the testing phase detailed below.
 
 Open the VS Code *Run and Debug* panel from the toolbar and execute either of the tasks "*All Tests*" or "*Coverage All Tests*".
 A new terminal window named *Python* will open to display the resultsof the tests.

@@ -2,10 +2,8 @@
 # Copyright © 2024 Joel A Mussman. All rights reserved.
 #
 
-import jwt
+from jwt import decode
 from logging import error
-
-from lambdaone import logger
 
 def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
 
@@ -19,7 +17,7 @@ def verify(access_token, signing_key, algorithm, audience, issuer, scopes):
         # Decode the token using the indicated key. The only algorithms supported are listed
         # at https://pyjwt.readthedocs.io/en/stable/algorithms.html.
 
-        decoded_token = jwt.decode(access_token, signing_key, algorithms = [ algorithm ], audience=audience, issuer=issuer, options = { 'verify_exp': True, 'verify_iss': True, 'verify_aud': True })
+        decoded_token = decode(access_token, signing_key, algorithms = [ algorithm ], audience=audience, issuer=issuer, options = { 'verify_exp': True, 'verify_iss': True, 'verify_aud': True })
         resolved = 0
 
         for scope in scopes:

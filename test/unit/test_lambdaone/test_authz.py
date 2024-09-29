@@ -27,52 +27,74 @@ class TestAuthZ(TestCase):
         cls.mock_token_payload = { 'aud': 'myaudience', 'issuer': 'someissuer', 'sub': '1234567890', 'issuedat': now, 'expiresat': expires, 'scopes': [ 'treasure:read' ]}        
         cls.mock_algorithm = 'RS256'
        
-        # "Hoist" the mock of logging error. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
+        # "Hoist" the mock of logging debug and error. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
 
+        cls.mod_jwt_decode = jwt.decode
+
+        cls.mock_jwt_decode_context = patch('jwt.decode')
+        cls.mock_jwt_decode_context.start()
+
+        cls.mod_logging_debug = logging.debug
         cls.mod_logging_error = logging.error
 
-        cls.mock_logging_error = patch('logging.error', return_value = None)
-        cls.mock_logging_error.start()
+        cls.mock_logging_debug_context = patch('logging.debug', return_value = None)
+        cls.mock_logging_debug_context.start()
+
+        cls.mock_logging_error_context = patch('logging.error', return_value = None)
+        cls.mock_logging_error_context.start()
 
         importlib.reload(authz)
 
     @classmethod
     def tearDownClass(cls) -> None:
 
-        cls.mock_logging_error.stop()
+        cls.mock_jwt_decode_context.stop()
 
+        jwt.decode = cls.mod_jwt_decode
+
+        cls.mock_logging_debug_context.stop()
+        cls.mock_logging_error_context.stop()
+
+        logging.debug = cls.mod_logging_debug
         logging.error = cls.mod_logging_error
 
         importlib.reload(authz)
 
         return super().tearDownClass()
+    
+    def setUp(self):
 
-    @patch('jwt.decode')
-    def test_accepts_valid_token(self, mock_jwt_decode):
+        TestAuthZ.mock_logging_error_context.target.error.reset_mock()
+        TestAuthZ.mock_logging_error_context.target.error.return_value = None
+        TestAuthZ.mock_logging_error_context.target.error.side_effect = None
 
-        mock_jwt_decode.return_value = TestAuthZ.mock_token_payload
-        self.addCleanup(mock_jwt_decode.stop)
+    def test_accepts_valid_token(self):
+
+        TestAuthZ.mock_jwt_decode_context.target.decode.return_value = TestAuthZ.mock_token_payload
 
         result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:read' ])
 
         self.assertIsNotNone(result)
 
-    @patch('jwt.decode', side_effect = jwt.exceptions.ExpiredSignatureError)
-    def test_rejects_expired_token(self, mock_jwt_decode):
+    def test_rejects_expired_token(self):
+
+        TestAuthZ.mock_jwt_decode_context.target.decode.side_effect = jwt.exceptions.ExpiredSignatureError
 
         result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:read' ])
         
         self.assertIsNone(result)
 
-    @patch('jwt.decode', side_effect = jwt.exceptions.InvalidAudienceError)
-    def test_rejects_unexpected_audience(self, mock_jwt_decode):
+    def test_rejects_unexpected_audience(self):
+
+        TestAuthZ.mock_jwt_decode_context.target.decode.side_effect = jwt.exceptions.InvalidAudienceError
 
         result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:read' ])
         
         self.assertIsNone(result)
 
-    @patch('jwt.decode', side_effect = jwt.exceptions.InvalidIssuerError)
-    def test_rejects_unexpected_issuer(self, mock_jwt_decode):
+    def test_rejects_unexpected_issuer(self):
+
+        TestAuthZ.mock_jwt_decode_context.target.decode.side_effect = jwt.exceptions.InvalidIssuerError
 
         result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:read' ])
         
@@ -81,8 +103,16 @@ class TestAuthZ(TestCase):
     @patch('jwt.decode')
     def test_rejects_missing_scope(self, mock_jwt_decode):
 
-        mock_jwt_decode.return_value = TestAuthZ.mock_token_payload
+        TestAuthZ.mock_jwt_decode_context.target.decode.sreturn_value = TestAuthZ.mock_token_payload
 
         result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:write' ])
 
         self.assertIsNone(result)
+
+    def test_logs_error_on_exception(self):
+
+        TestAuthZ.mock_jwt_decode_context.target.decode.side_effect = ValueError
+
+        result = authz.verify(TestAuthZ.mock_token, TestAuthZ.mock_key, TestAuthZ.mock_algorithm, TestAuthZ.mock_audience, TestAuthZ.mock_issuer, [ 'treasure:write' ])
+
+        TestAuthZ.mock_logging_error_context.target.error.assert_called_once()

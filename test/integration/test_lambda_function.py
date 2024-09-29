@@ -73,7 +73,7 @@ class TestLambdaFunction(TestCase):
 
         cls.mock_token_payload = { 'aud': cls.mock_audience, 'iss': cls.mock_issuer, 'sub': cls.mock_subject, 'issuedat': now, 'expiresat': expires, 'scopes': cls.mock_scopes}        
         cls.mock_token = jwt.encode(cls.mock_token_payload, cls.mock_private_key, algorithm = 'RS256', headers = { 'kid': '5b889a22-6e44-45f7-8f5e-537db1d9b16e' })
-
+  
     def setUp(self):
                 
         # The environment variables need to be reset for each test.
@@ -81,6 +81,7 @@ class TestLambdaFunction(TestCase):
         self.mock_audience = os.environ['AUDIENCE'] = TestLambdaFunction.mock_audience
         self.mock_issuer = os.environ['ISSUER'] = TestLambdaFunction.mock_issuer
         self.mock_jwks_path = os.environ['JWKSPATH'] = TestLambdaFunction.mock_jwks_path
+        self.mock_lambda_log_level = os.environ['LAMBDA_LOG_LEVEL'] = 'ERROR'
         self.mock_require = os.environ['REQUIRE'] = TestLambdaFunction.mock_require
         self.mock_signature_key_path = os.environ['SIGNATUREKEYPATH'] = TestLambdaFunction.mock_signature_key_path
 
@@ -113,7 +114,7 @@ class TestLambdaFunction(TestCase):
 
         result = lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.assertDictEqual(TestLambdaFunction.mock_token_payload, result)
+        self.assertIn('Hello, World!', result)
 
     def test_error_for_bad_fixed_key(self):
 
@@ -131,7 +132,7 @@ class TestLambdaFunction(TestCase):
 
         result = lambda_function.handler(self.mock_event, self.mock_context)
 
-        self.assertDictEqual(TestLambdaFunction.mock_token_payload, result)
+        self.assertIn('Hello, World!', result)
 
     def test_error_for_bad_jwks_key(self):
 

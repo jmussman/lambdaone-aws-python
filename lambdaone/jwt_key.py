@@ -8,8 +8,6 @@ import jwt
 from jwt import PyJWKClient
 from logging import error
 
-from lambdaone import logger
-
 def load(path, token):
     
     signing_key = None
@@ -27,7 +25,7 @@ def load(path, token):
 
     except Exception as e:
         
-        error(f'Bad signing key path or key not found: { e }')
+        error(f'Bad signing key path, key, or algorithm not found: { e }')
 
         signing_key = None
         algorithm = None

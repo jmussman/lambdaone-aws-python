@@ -5,25 +5,29 @@
 # logging to stdout, where it will be picked up by the container logging.
 #
 
-from dotenv import load_dotenv
-from logging import error, Formatter, getLogger, StreamHandler
-import os
+import logging
+from logging import Formatter, getLogger, StreamHandler
 import sys
 
-load_dotenv()
+def initialize(log_level):
 
-# Log levels: DEBUG, INFO, WARNING, ERROR
+    logger = getLogger()
 
-log_level = os.environ.get('LAMBDA_LOG_LEVEL', 'ERROR')
-logger = getLogger()
-logger.setLevel(log_level)
+    try:
 
-handler = StreamHandler(sys.stdout)
-handler.setLevel(log_level)
+        # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL; ask of Python 3.2
+        # you can pass the numeric value or a string.
 
-formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
+        logger.setLevel(log_level)
 
-logger.addHandler(handler)
+    except Exception as e:
 
-error(f'log level {log_level}')
+        log_level = logging.NOTSET
+
+    handler = StreamHandler(sys.stdout)
+    handler.setLevel(log_level)
+
+    formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)

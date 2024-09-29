@@ -4,10 +4,8 @@
 # Use PyJWT to load the signing key from a public key store.
 #
 
-import jwt
+from jwt import get_unverified_header
 from logging import error
-
-from lambdaone import logger
 
 def load(path, token):
 
@@ -20,7 +18,7 @@ def load(path, token):
 
             signing_key = keydata.read()
 
-        algorithm = jwt.get_unverified_header(token)['alg']
+        algorithm = get_unverified_header(token)['alg']
 
     except Exception as e:
         

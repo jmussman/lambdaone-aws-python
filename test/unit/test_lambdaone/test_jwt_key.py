@@ -44,13 +44,17 @@ class TestJwtKey(TestCase):
 
         cls.mock_jwt_PyJWKClient_context = patch('jwt.PyJWKClient', return_value = cls.mock_client)
         cls.mock_jwt_PyJWKClient_context.start()
+       
+        # "Hoist" the mock of logging debug and error. The full description of this pattern is in the test_lambdaone/test_jwt_key.py file.
 
-        # "Hoist" the mock of logging error.
-
+        cls.mod_logging_debug = logging.debug
         cls.mod_logging_error = logging.error
 
-        cls.mock_logging_error = patch('logging.error', return_value = None)
-        cls.mock_logging_error.start()
+        cls.mock_logging_debug_context = patch('logging.debug')
+        cls.mock_logging_debug_context.start()
+
+        cls.mock_logging_error_context = patch('logging.error')
+        cls.mock_logging_error_context.start()
 
         # If you are familar with jest or vitest in JavaScript, this call forces the mocks to be "hosited" in front of
         # the jwt_key module import. It is a reload but it is the same thing:
@@ -70,8 +74,10 @@ class TestJwtKey(TestCase):
 
         # Put back the logging error.
 
-        cls.mock_logging_error.stop()
+        cls.mock_logging_debug_context.stop()
+        cls.mock_logging_error_context.stop()
 
+        logging.debug = cls.mod_logging_debug
         logging.error = cls.mod_logging_error
 
         importlib.reload(jwt)
@@ -110,6 +116,11 @@ class TestJwtKey(TestCase):
         self.mock_jwt_get_unverified_header_context.target.get_unverified_header.side_effect = None
         self.addCleanup(self.mock_jwt_get_unverified_header_context.stop)
 
+        # Mock the error function.
+
+        TestJwtKey.mock_logging_debug_context.target.error.reset_mock()
+        TestJwtKey.mock_logging_debug_context.target.error.return_value = None
+
     def test_load_key(self):
 
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
@@ -118,7 +129,7 @@ class TestJwtKey(TestCase):
 
     def test_client_initialized_with_path(self):
 
-        result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
+        jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
         # This is a tricky example: one of two different Class definitions could be used, the one
         # in jwt (more likely) or the one in jwt.jwks_client where it originates. Both must be
@@ -163,6 +174,14 @@ class TestJwtKey(TestCase):
         result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
 
         self.assertEqual(( None, None ), result)
+
+    def test_logs_error_on_exception(self):
+        
+        self.mock_jwt_get_unverified_header_context.target.get_unverified_header.side_effect = Exception
+
+        result = jwt_key.load(TestJwtKey.mock_path, TestJwtKey.mock_token)
+
+        TestJwtKey.mock_logging_error_context.target.error.assert_called_once()
 
     def test_None_on_get_algorithm_no_algorithm(self):
         

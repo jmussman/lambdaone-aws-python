@@ -4,7 +4,7 @@
 
 from dotenv import load_dotenv
 import json
-from logging import debug, error
+from logging import debug, error, info
 import os
 import re
 import sys
@@ -19,8 +19,12 @@ def handler(event, context):
 
     load_dotenv()
 
-    result = None
+    log_level = os.environ.get('LAMBDA_LOG_LEVEL', 'ERROR')
+    logger.initialize(log_level)
+
     require = os.environ.get('REQUIRE')
+    result = None
+    token = None
 
     if require:
 
@@ -80,10 +84,12 @@ def handler(event, context):
 
                     if verified == None:
 
+                        info(f'Access denied: { token }')
                         result = { 'statusCode': 403, 'body': json.dumps('Access denied') }
     
     if result == None:
 
+        info(f'Access granted: { token or 'no authorization required' }')
         result = f'{ hello_world.hello() } sys.version: { sys.version }'
 
     return result

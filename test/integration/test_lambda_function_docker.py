@@ -26,6 +26,21 @@ import lambda_function
 
 class TestLambdaFunction(TestCase):
 
+    def dockerIsRunning(self):
+        
+        result = False
+
+        # Use the Docker command to see if Docker is running.
+
+        completed_process = subprocess.run([ 'docker', 'images' ], capture_output = True)
+
+        if completed_process.stdout is not None:
+
+            message = completed_process.stdout.decode('utf-8')
+            result = message.find('Cannot connect') < 0
+
+        return result
+
     @classmethod
     def setUpClass(cls):
 
@@ -114,8 +129,11 @@ class TestLambdaFunction(TestCase):
 
     def test_hello_world_without_authorization(self):
 
+        self.assertTrue(self.dockerIsRunning())
+
         os.system('docker build -f test/integration/Dockerfile.noauthz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
+        time.sleep(1) # Give Docker a chance
 
         request = Request('http://localhost:9000/2015-03-31/functions/function/invocations', data = b'{}')
         result = urlopen(request)
@@ -125,11 +143,14 @@ class TestLambdaFunction(TestCase):
 
     def test_hello_world_with_authorization(self):
 
+        self.assertTrue(self.dockerIsRunning())
+
         os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
+        time.sleep(1) # Give Docker a chance
 
         # The local container does not translate from the HTTP headers to the event, that only happens at the AWS gateway.
-
+        
         result = urlopen('http://localhost:9000/2015-03-31/functions/function/invocations', data = json.dumps(self.mock_event).encode('utf-8'))
 
         # The local container does not translate the output either, so the response object is what is read.
@@ -138,6 +159,8 @@ class TestLambdaFunction(TestCase):
         self.assertIn('Hello, World!', body)
 
     def test_hello_world_with_incorrect_authorization(self):
+
+        self.assertTrue(self.dockerIsRunning())
 
         with open('test/resources/private_b.pem', 'r') as fp:       # Test to not match the public key
 
@@ -151,6 +174,7 @@ class TestLambdaFunction(TestCase):
 
         os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
+        time.sleep(1) # Give Docker a chance
         self.mock_event.get('headers')['authorization'] = f'bearer {mock_token}'
 
         # The local container does not translate from the HTTP headers to the event, that only happens at the AWS gateway.
@@ -164,8 +188,11 @@ class TestLambdaFunction(TestCase):
     
     def test_hello_world_with_bad_authorization(self):
 
+        self.assertTrue(self.dockerIsRunning())
+
         os.system('docker build -f ./test/integration/Dockerfile.authz --platform linux/amd64 -t lambdaone-image:test .')
         os.system('docker run --detach --platform linux/amd64 -p 9000:8080 lambdaone-image:test')
+        time.sleep(1) # Give Docker a chance
         self.mock_event.get('headers').pop('authorization')
 
         # The local container does not translate from the HTTP headers to the event, that only happens at the AWS gateway.
